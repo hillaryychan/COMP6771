@@ -142,3 +142,44 @@ CHECK((is_comp6771 and is_about_cxx));
 CHECK((is_about_german or is_about_cxx));
 CHECK(not is_about_german);
 ```
+
+## Type Conversion
+
+In C++ we are able to convert types **implicitly** or **explicitly**. We will cover this later in more detail.
+
+Implicit prompting conversions:
+
+``` cpp
+auto const i = 42;
+{
+    auto d = 0.0;
+    REQUIRE(d == 0.0);
+
+    d = i; // silent conversion from int to double
+    CHECK(d == 42.0);
+    CHECK(d != 41);
+}
+```
+
+Explicit prompting conversions:
+
+``` cpp
+auto const i = 42;
+{
+    auto const d = static_cast<double>(i);
+    CHECK(d == 42.0);
+    CHECK(d != 41);
+}
+```
+
+Explicit narrowing (lossy) conversions
+
+``` cpp
+auto const i = 42;
+{
+    // information lost, we're saying we know
+    auto const b = gsl_lite::narrow_cast<bool>(i);
+    CHECK(b == true);
+    CHECK(b == gsl_lite::narrow_cast<bool>(42));
+}
+```
