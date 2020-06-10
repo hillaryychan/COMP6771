@@ -167,6 +167,8 @@ auto const message4 = fmt::format("life={life}, pi={pi}",
 
 ## `std::vector` Revisited
 
+### Initialising Vectors
+
 ``` cpp
 auto some_ints = std::vector<int>{0, 1, 2, 3, 2, 5};
 REQUIRE(ranges::distance(some_ints) == 6);
@@ -180,6 +182,8 @@ CHECK(some_ints[4] == 2);
 CHECK(some_ints[5] == 5);
 ```
 
+### Adding Elements To a Vector
+
 `std::vector` grows as we add elements
 
 ``` cpp
@@ -191,6 +195,8 @@ REQUIRE(ranges::distance(some_ints) == 7);
 
 CHECK(some_ints[6] == 42);
 ```
+
+### Removing Elements From a Vector
 
 `std::vector` shrinks as we remove elements
 
@@ -220,6 +226,8 @@ REQUIRE(no_elements.empty());
 
 CHECK(some_elements == no_elements);
 ```
+
+### More Vector Initialisation
 
 I want a vector with five zeros
 
@@ -272,7 +280,7 @@ auto const yellow_draw_four = card{colour::yellow, value::draw_four};
 
 ### Stacks
 
-Initialising and adding elements to a stack
+#### Initialising and Adding Elements To a Stack
 
 ``` cpp
 #include <stack>
@@ -287,7 +295,7 @@ deck.push(yellow_draw_four);
 deck.push(blue_number);
 ```
 
-Removing elements from a stack
+#### Removing Elements From a Stack
 
 ``` cpp
 CHECK(deck.top() == blue_number); // access top element
@@ -297,7 +305,7 @@ CHECK(deck.top() == yellow_draw_four);
 deck.pop();
 ```
 
-Comparing two stacks
+#### Comparing Two Stacks
 
 ``` cpp
 auto const more_cards = deck;
@@ -309,9 +317,11 @@ CHECK(more_cards != deck);
 
 ### Queues
 
-Initialising and adding element to a queue
+#### Initialising and Adding Element To a Queue
 
 ``` cpp
+#include <queue>
+
 auto deck = std::queue<card>();
 REQUIRE(deck.empty());
 
@@ -322,7 +332,7 @@ deck.push(yellow_draw_four);
 deck.push(blue_number);
 ```
 
-Removing elements from a queue
+#### Removing Elements From a Queue
 
 ``` cpp
 CHECK(deck.front() == red_number); // access first element
@@ -332,7 +342,7 @@ CHECK(deck.front() == green_draw_two);
 deck.pop();
 ```
 
-Comparing two queues
+#### Comparing Two Queues
 
 ``` cpp
 auto const more_cards = deck;
@@ -350,6 +360,10 @@ CHECK(more_cards != deck);
 
 ![iterators](../imgs/2-10_iterators.jpg)
 
+Algorithms go through containers using iterators and return an iterator as a result.
+
+Comparing iterators with other traversal methods:
+
 | Operation      | Array-like                  | Node-based     | Iterator      |
 | ---            | ---                         | ---            | ---           |
 | Iteration type | `gsl_lite::index`           | `node*`        | `unspecified` |
@@ -359,3 +373,132 @@ CHECK(more_cards != deck);
 | Advance fwd    | `++i`                       | `i = i->next`  | `++i`         |
 | Advance bwd    | `--i`                       | `i = i->prev`  | `--i`         |
 | Comparison     | `i < ranges::distance(v)`   | `i != nullptr` | `i != s`      |
+
+### Ranges
+
+Generating a hand of cards
+
+``` cpp
+auto hand = std::vector<card>{
+    red_number,
+    blue_number,
+    green_draw_two,
+    blue_number,
+    blue_skip,
+    yellow_draw_four,
+    blue_number,
+    blue_number,
+    blue_skip,
+};
+```
+
+#### Counting Cards
+
+``` cpp
+#include <range/v3/algorithm.hpp>
+
+CHECK(ranges::count(hand, red_number) == 1);
+CHECK(ranges::count(hand, blue_number) == 4);
+CHECK(ranges::count(hand, blue_skip) == 2);
+```
+
+#### Finding a Card
+
+``` cpp
+auto card_to_play = ranges::find(hand, blue_number);
+REQUIRE(card_to_play != hand.end());
+CHECK(*card_to_play == blue_number);
+```
+
+`card_to_play` is an iterator at position `1` with value `blue_number`
+
+![ranges::find](../imgs/2-11_ranges-find.png)
+
+``` cpp
+auto const green_draw_four = card{colour::green, value::draw_four};
+auto card_to_play = ranges::find(hand, green_draw_four);
+
+REQUIRE(card_to_play == hand.cend());
+```
+
+`card_to_play` is an iterator at position `10` with no value since the card can't be fount
+
+![ranges::find](../imgs/2-11_ranges-find2.png)
+
+#### Erasing a Single Specific Card
+
+``` cpp
+auto card_to_play = ranges::find(hand, blue_number);
+REQUIRE(card_to_play != hand.cend());
+CHECK(*card_to_play == blue_number);
+
+card_to_play = hand.erase(card_to_play);
+REQUIRE(card_to_play != hand.cend());
+CHECK(*card_to_play = green_draw_two);
+```
+
+`card_to_play` is an iterator at position `1` and value `green_draw_two` since `erase()` returns the iterator following the last removed element
+
+![find::erase](../imgs/2-11_find-erase.png)
+
+#### Lambda Expressions
+
+This can be done via **lambda expressions**
+
+``` cpp
+// count_if counts the number of elements that satisfy a given predicate
+auto const blue_cards = ranges::count_if(hand, [](card const c) {
+    return c.colour = colour::blue
+});
+
+auto const expected_blue_cards = 6;
+CHECK(blue_cards == expected blue_cards)
+```
+
+Lambda unary predicate:
+
+``` cpp
+[](card const c) {
+    return c.colour == colour::blue;
+}
+```
+
+Explicit return type:
+
+``` cpp
+[](card const c) -> bool {
+    return c.colour == colour::blue;
+}
+```
+
+``` cpp
+ranges::sort(hand);
+REQUIRE(ranges::is_sorted(hand));
+
+auto [first, last] = ranges::equal_range(hand, blue_number);
+REQUIRE(first != last);
+CHECK(ranges::distance(first, last) == 4);
+
+CHECK(ranges::all_of(first, last, [blue_number](card const x) {
+    return x == blue_number;
+}));
+```
+
+`ranges::equal_range` returns iterators of the beginning and end that match the given value
+
+![ranges::equal_range](../imgs/2-11_ranges-equal-range.png)
+
+Lambda with value capture
+
+``` cpp
+auto const blue_then_yellow = [](card const x, card const y) {
+    return x.colour == colour::blue and y.colour == colour::yellow;
+};
+
+auto const blue_card = ranges::adjacent_find(hand, blue_then_yellow);
+REQUIRE(blue_card != hand.end());
+CHECK(*blue_card == blue_skip);
+
+auto const yellow_card = ranges::next(blue_card);
+CHECK(*yellow_card == yellow_draw_four);
+```
