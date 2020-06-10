@@ -227,11 +227,11 @@ I want a vector with five zeros
 auto all_default = std::vector<double>(5);
 REQUIRE(ranges::distance(all_default) == 5);
 
-CHECK(all_default[0] == 0.0');
-CHECK(all_default[1] == 0.0');
-CHECK(all_default[2] == 0.0');
-CHECK(all_default[3] == 0.0');
-CHECK(all_default[4] == 0.0');
+CHECK(all_default[0] == 0.0);
+CHECK(all_default[1] == 0.0);
+CHECK(all_default[2] == 0.0);
+CHECK(all_default[3] == 0.0);
+CHECK(all_default[4] == 0.0);
 ```
 
 I want a vector with three identical values
@@ -350,12 +350,12 @@ CHECK(more_cards != deck);
 
 ![iterators](../imgs/2-10_iterators.jpg)
 
-| Operation        | Array-like                  | Node-based     | Iterator      |
-| ---              | ---                         | ---            | ---           |
-| Iteration type   | `gsl_lite::index`           | `node*`        | `unspecified` |
-| Read element     | `v[i]`                      | `i->value`     | `*i`          |
-| Successor        | `j = i + n < ranges::distance(v) ? i + n : ranges::distance(v)` | `j = i->successor(n)` | `ranges::next(i, s, n')` |
-| Predecessor      | `j = i - n < 0 ? 0 : i - n` | `j = i->precessor(n)` | `ranges::prev(i, s, n)` |
-| Advance forward  | `++i`                       | `i = i->next`  | `++i`         |
-| Advance backward | `--i`                       | `i = i->prev`  | `--i`         |
-| Comparison       | `i < ranges::distance(v)`   | `i != nullptr` | `i != s`      |
+| Operation      | Array-like                  | Node-based     | Iterator      |
+| ---            | ---                         | ---            | ---           |
+| Iteration type | `gsl_lite::index`           | `node*`        | `unspecified` |
+| Read element   | `v[i]`                      | `i->value`     | `*i`          |
+| Successor      | `j = i + n < ranges::distance(v) ? i + n : ranges::distance(v)` | `j = i->successor(n)` | `ranges::next(i, s, n')` |
+| Predecessor    | `j = i - n < 0 ? 0 : i - n` | `j = i->precessor(n)` | `ranges::prev(i, s, n)` |
+| Advance fwd    | `++i`                       | `i = i->next`  | `++i`         |
+| Advance bwd    | `--i`                       | `i = i->prev`  | `--i`         |
+| Comparison     | `i < ranges::distance(v)`   | `i != nullptr` | `i != s`      |
