@@ -115,7 +115,7 @@ auto expr2 = expr;
 REQUIRE(expr == expr2);
 ```
 
-Note: `REQUIRE` aborts if the test case fails, while `CHECK` continue execution even if it fails.
+Note: `REQUIRE` aborts a test case if it fails, while `CHECK` continue execution even if it fails.
 
 C++ has value semantics:
 
@@ -716,4 +716,3 @@ There are 4 types of program errors that we will discuss:
     auto const empty = std::string("");
     CHECK(empty[0] == 'C'); // Logic error: bad character access
     ```
-
