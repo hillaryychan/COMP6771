@@ -463,7 +463,7 @@ See more on lambda expressions [here](#lambda-expressions)
 
 #### Lambda Expressions
 
-This can be done via **lambda expressions**. Lambda expressions (or anonymous functions) are function definitions that are not bound to an identifier. They are often passed as arguments to higher-order functions, or used to construct the result of a higher order function that needs to return a function.
+**Lambda expressions** (or **anonymous functions**) are function definitions that are not bound to an identifier. They are often passed as arguments to higher-order functions, or used to construct the result of a higher order function that needs to return a function.
 
 ``` cpp
 // count_if counts the number of elements that satisfy a given predicate
