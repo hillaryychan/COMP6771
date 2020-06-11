@@ -441,6 +441,26 @@ CHECK(*card_to_play = green_draw_two);
 
 ![find::erase](../imgs/2-11_find-erase.png)
 
+#### Getting a Range of Values
+
+``` cpp
+ranges::sort(hand);
+REQUIRE(ranges::is_sorted(hand));
+
+auto [first, last] = ranges::equal_range(hand, blue_number);
+REQUIRE(first != last);
+CHECK(ranges::distance(first, last) == 4);
+
+CHECK(ranges::all_of(first, last, [blue_number](card const x) {  // uses lambda expressions
+    return x == blue_number;
+}));
+```
+
+`ranges::equal_range` returns iterators of the beginning and end that match the given value  
+See more on lambda expressions [here](#lambda-expressions)
+
+![ranges::equal_range](../imgs/2-11_ranges-equal-range.png)
+
 #### Lambda Expressions
 
 This can be done via **lambda expressions**
@@ -471,24 +491,7 @@ Explicit return type:
 }
 ```
 
-``` cpp
-ranges::sort(hand);
-REQUIRE(ranges::is_sorted(hand));
-
-auto [first, last] = ranges::equal_range(hand, blue_number);
-REQUIRE(first != last);
-CHECK(ranges::distance(first, last) == 4);
-
-CHECK(ranges::all_of(first, last, [blue_number](card const x) {
-    return x == blue_number;
-}));
-```
-
-`ranges::equal_range` returns iterators of the beginning and end that match the given value
-
-![ranges::equal_range](../imgs/2-11_ranges-equal-range.png)
-
-Lambda with value capture
+Multi-argument lambda:
 
 ``` cpp
 auto const blue_then_yellow = [](card const x, card const y) {
@@ -501,4 +504,107 @@ CHECK(*blue_card == blue_skip);
 
 auto const yellow_card = ranges::next(blue_card);
 CHECK(*yellow_card == yellow_draw_four);
+```
+
+##### Lambda with value capture
+
+Lambda allows **captures**, which is a list that defines ***outside variablaes*** that are accessible from within the lambda function body.
+
+``` cpp
+[blue_number](card const x) {
+    return x == blue_number;
+}
+```
+
+We can capture by **reference**:
+
+``` cpp
+[&cards_swapped](card const c) {
+    // ... stuff
+}
+
+```
+
+Example: two  players can swap a card of the same value (but for a different colour)
+
+``` cpp
+auto note_swaps(std::map<card, int>& cards_swapped, card const c) -> void {
+    auto result = cards_swapped.find(c);
+    if (result == cards_swapped.end()) {
+        cards_swapped.emplace(c, 1);
+        return;
+    }
+
+    ++result->second;
+}
+
+{
+    auto cards_swapped = std::map<card, int>{};
+    ranges::transform(hand, hand.begin(), [&cards_swapped](card const c) {
+        if (c.colour != colour::blue) {
+            return c;
+        }
+
+        note_swaps(cards_swapped, c);
+        return card{colour::green, c.value};
+    });
+
+    CHECK(ranges::none_of(hand, [](card const c) {
+        return c.colour == colour::blue;
+    }));
+}
+{
+    REQUIRE(cards_swapped.contains(blue_number));
+    CHECK(cards_swapped.at(blue_number) == 4);
+    auto const green_number = card{colour::green, value::number};
+    CHECK(ranges::count(hand, green_number) == 4);
+}
+{
+    REQUIRE(cards_swapped.contains(blue_skip));
+    CHECK(cards_swapped.at(blue_skip) == 2);
+    auto const green_skip = card{colour::green, value::skip};
+    CHECK(ranges::count(hand, green_skip) == 2);
+}
+```
+
+##### Lambda and Library Function Objects
+
+``` cpp
+#include <range/v3/functional.hpp>
+
+ranges::equal{}
+// is roughly equivalent to
+[](auto const& x, auto const& y) {
+    return x == y;
+}
+```
+
+``` cpp
+#include <range/v3/functional.hpp>
+
+ranges::not_equal_to{}
+// is roughly equivalent to
+[](auto const& x, auto const& y) {
+    return x != y;
+}
+```
+
+``` cpp
+#include <range/v3/functional.hpp>
+
+ranges::plus{}
+// is roughly equivalent to
+[](auto const& x, auto const& y) {
+    return x + y;
+}
+```
+
+``` cpp
+#include <range/v3/functional.hpp>
+
+ranges::multiplies{}
+// is roughly equivalent to
+[](auto const& x, auto const& y) {
+    return x * y;
+}
 ```
