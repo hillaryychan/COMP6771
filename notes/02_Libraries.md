@@ -280,11 +280,11 @@ auto const yellow_draw_four = card{colour::yellow, value::draw_four};
 
 ### Stacks
 
+**Stacks** and their functions can be accessed using `#include <stack>`
+
 #### Initialising and Adding Elements To a Stack
 
 ``` cpp
-#include <stack>
-
 auto deck = std::stack<card>();
 REQUIRE(deck.empty());
 
@@ -317,11 +317,11 @@ CHECK(more_cards != deck);
 
 ### Queues
 
+**Queues** and their functions can be accessed by using `#include <queue>`
+
 #### Initialising and Adding Element To a Queue
 
 ``` cpp
-#include <queue>
-
 auto deck = std::queue<card>();
 REQUIRE(deck.empty());
 
@@ -374,6 +374,8 @@ Comparing iterators with other traversal methods:
 | Advance bwd    | `--i`                       | `i = i->prev`  | `--i`         |
 | Comparison     | `i < ranges::distance(v)`   | `i != nullptr` | `i != s`      |
 
+Note: `++i` is preferred over `i++`
+
 ### Ranges
 
 Generating a hand of cards
@@ -405,6 +407,8 @@ CHECK(ranges::count(hand, blue_skip) == 2);
 #### Finding a Card
 
 ``` cpp
+#include <range/v3/algorithm.hpp>
+
 auto card_to_play = ranges::find(hand, blue_number);
 REQUIRE(card_to_play != hand.end());
 CHECK(*card_to_play == blue_number);
@@ -415,6 +419,8 @@ CHECK(*card_to_play == blue_number);
 ![ranges::find](../imgs/2-11_ranges-find.png)
 
 ``` cpp
+#include <range/v3/algorithm.hpp>
+
 auto const green_draw_four = card{colour::green, value::draw_four};
 auto card_to_play = ranges::find(hand, green_draw_four);
 
@@ -428,6 +434,8 @@ REQUIRE(card_to_play == hand.cend());
 #### Erasing a Single Specific Card
 
 ``` cpp
+#include <range/v3/algorithm.hpp>
+
 auto card_to_play = ranges::find(hand, blue_number);
 REQUIRE(card_to_play != hand.cend());
 CHECK(*card_to_play == blue_number);
@@ -444,6 +452,8 @@ CHECK(*card_to_play = green_draw_two);
 #### Getting a Range of Values
 
 ``` cpp
+#include <range/v3/algorithm.hpp>
+
 ranges::sort(hand);
 REQUIRE(ranges::is_sorted(hand));
 
@@ -466,6 +476,8 @@ See more on lambda expressions [here](#lambda-expressions)
 **Lambda expressions** (or **anonymous functions**) are function definitions that are not bound to an identifier. They are often passed as arguments to higher-order functions, or used to construct the result of a higher order function that needs to return a function.
 
 ``` cpp
+#include <range/v3/algorithm.hpp>
+
 // count_if counts the number of elements that satisfy a given predicate
 auto const blue_cards = ranges::count_if(hand, [](card const c) {
     return c.colour = colour::blue
@@ -528,6 +540,8 @@ We can capture by **reference**:
 Example: two  players can swap a card of the same value (but for a different colour)
 
 ``` cpp
+#include <range/v3/algorithm.hpp>
+
 auto note_swaps(std::map<card, int>& cards_swapped, card const c) -> void {
     auto result = cards_swapped.find(c);
     if (result == cards_swapped.end()) {
@@ -535,7 +549,7 @@ auto note_swaps(std::map<card, int>& cards_swapped, card const c) -> void {
         return;
     }
 
-    ++result->second;
+    ++(result->second);
 }
 
 {
@@ -606,5 +620,453 @@ ranges::multiplies{}
 // is roughly equivalent to
 [](auto const& x, auto const& y) {
     return x * y;
+}
+```
+
+#### Container Size
+
+We usually want to use `ranges::distance` to get the size of a container because its return type is implicitly compatible with `int`.
+
+The vector/string interfaces use a different type with different characteristics, and we don't want to mix them up. The compiler helps us with this.
+
+You can use `size()` for those parts of the interface, if you keep the scopes small.
+
+``` cpp
+#include <<range/v3/range.hpp> // for ranges::distance
+// E.g. 1
+auto v = std::vector<int>(other.size());
+
+// E.g. 2 (yuck, but best option till you get more experience)
+for (auto i = 0; i < ranges::distance(v); ++i) {
+    using size_type = std::vector<int>::size_type; // C++ typedef
+    v[gsl_lite::narrow_cast<size_type>(i)];
+}
+
+// E.g. 3 i should not leave the scope of the loop
+for (auto i = std::vector<int>::size_type{0}; i < v.size(); ++i) {
+    v[i];
+}
+```
+
+#### Constructing a Vector of One Type From a Vector of Another type
+
+``` cpp
+auto standard_deviation_distribution() -> std::vector<double>;
+static_cast<std::vector<int>>(standard_deviation_distribution());
+// gives us a compile-time error: we can't construct vector<int> from a vector<double>
+
+auto standard_deviation_distribution() -> std::vector<double>;
+auto const intermediate = standard_deviation_distribution();
+std::vector<int>(intermediate.begin(), intermediate.end());
+```
+
+#### Generating a Sequence of Values on Demand
+
+Say we want to create a vector with values with a large sequence of integers.  
+We could manually declare the values:
+
+``` cpp
+auto const first_ten_thousand = std::vector<int>{
+    0, 1, 2, /* ... */, 999,
+}
+```
+
+Or, we could have them get generated for us:
+
+``` cpp
+#include <range/v3/numeric.hpp>
+
+auto first ten_thousand = std::vector<int>(10000);
+
+// populates vector with values [0, ..., 9999]
+ranges::iota(first_ten_thousand, 0);
+```
+
+``` cpp
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
+
+auto first_hundred = views::iota(0, 100); // creates a range of values 0 .. 99
+// convert range of values to a vector
+auto const all_at_once= first_hundred | ranges::to<std::vector>;
+
+CHECK(ranges::equal(first_hundred, all_at_once));
+// We can compare values without needing them to be the same type
+// ranges::equal converts them to ranges and compares them
+```
+
+The `|` is just like in UNIX; it pipe values.
+
+#### Filters
+
+Filters ("keep if"):
+
+``` cpp
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
+namespace views = ranges::views;
+
+auto is_blue = [](card const c) { return c.colour == colour::blue; };
+auto all_blue = hand | views::filter(is_blue);
+
+auto const expected = std::vector<card>{
+    blue_number,
+    blue_number,
+    blue_skip,
+    blue_number,
+    blue_number,
+    blue_skip,
+};
+
+auto const actual = all_blue | ranges::to<std::vector>;
+CHECK(expected == actual);
+```
+
+Filters ("remove if"):
+
+``` cpp
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
+namespace views = ranges::views;
+
+auto is_blue = [](card const c) { return c.colour == colour::blue; };
+auto no_blue = hand | views::remove_if(is_blue);
+
+auto const expected = std::vector<card>{
+    red_number,
+    green_draw_two,
+    yellow_draw_four,
+};
+
+auto const actual = no_blue | ranges::to<std::vector>;
+CHECK(expected == actual);
+```
+
+#### Reversing
+
+``` cpp
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
+namespace views = ranges::views;
+
+auto const is_blue_card = [](card const c) { return c.colour == colour::blue; };
+{
+    // find the first blue card
+    auto const result = ranges::find_if(hand, is_blue_card);
+    REQUIRE(result != hand.end());
+    CHECK(*result == blue_number);
+}
+{
+    // find the last blue card
+    auto back_to_front = hand | views::reverse;
+
+    auto const result = ranges::find_if(back_to_front, is_blue_card);
+    REQUIRE(result != back_to_front.end())
+    CHECK(*result == blue_skip);
+}
+```
+
+#### In-place Transform
+
+``` cpp
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
+namespace views = ranges::views;
+
+auto swap_blue = [](card const c) {
+    return c.colour != colour::blue ? c : card{colour::green, c.value};
+};
+
+auto const expected = std::vector<card>{
+    red_number,
+    green_number,
+    green_draw_two,
+    green_number,
+    green_skip,
+    yellow_draw_four,
+    green_number,
+    green_number,
+    green_skip,
+};
+
+auto const actual = hand | views::transform(swap_blue);
+CHECK(expected == actual);
+```
+
+#### More String Manipulation
+
+Splitting strings:
+
+``` cpp
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
+namespace views = ranges::views;
+using namespace std::string_literals;
+
+auto const sentence = "the quick brown fox jumps over the lazy dog"s;
+auto to_string = [](auto x) { return x | ranges::to<std::string>; };
+auto const individual_words = sentence
+                            | views::split(' ')
+                            | views::transform(to_string)
+                            | ranges::to<std::vector>;
+
+auto const expected = std::vector<std::string>{
+    "the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog"
+};
+
+CHECK(individual_words == expected);
+```
+
+Joining strings:
+
+``` cpp
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
+namespace views = ranges::views;
+
+auto const individual_words = std::vector<std::string>{
+    "the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog"
+};
+
+auto const sentence = words | views::join(' ') | ranges::to<std::string>;
+
+using namespace std::string_literals;
+auto const expected = "the quick brown fox jumps over the lazy dog"s;
+CHECK(sentence == expected);
+```
+
+Concatenating ranges:
+
+``` cpp
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
+namespace views = ranges::views;
+using namespace std::string_literals;
+
+auto const first = "the quick brown "s;
+auto const second = "fox jumps over"s;
+auto const third = std::vector<std::string>{" the", "lazy", "dog"};
+
+auto const sentence = views::concat(first, second, third | views::join(' '))
+                    | ranges::to<std::string>;
+
+auto const expected = "the quick brown fox jumps over the lazy dog"s;
+CHECK(sentence == expected);
+```
+
+#### First/Last *n* Elements
+
+Using ***only*** the first *n* elements:
+
+``` cpp
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
+namespace views = ranges::views;
+
+auto const front3 = hand | views::take(3) | ranges::to<std::vector>;
+auto const expeceted std::vector<card>{
+    red_number,
+    blue_number,
+    green_draw_two,
+};
+CHECK(front3 == expected);
+```
+
+Use ***all but*** the first *n* elements
+
+``` cpp
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
+namespace views = ranges::views;
+
+auto const back6 = hand | views::drop(3) | ranges::to<std::vector>;
+auto const expeceted std::vector<card>{
+    blue_skip,
+    yellow_draw_four,
+    blue_number,
+    blue_number,
+    blue_skip,
+};
+CHECK(back6 == expected);
+```
+
+Use ***only*** the last *n* elements:
+
+``` cpp
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
+namespace views = ranges::views;
+
+auto const back2 = hand | views::take_last(2) | ranges::to<std::vector>;
+auto const expeceted std::vector<card>{
+    blue_number,
+    blue_skip,
+};
+CHECK(back2 == expected);
+```
+
+***Don't*** use the last *n* elements:
+
+``` cpp
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
+namespace views = ranges::views;
+
+auto const front6 = hand | views::drop_last(3) | ranges::to<std::vector>;
+auto const expeceted std::vector<card>{
+    red_number,
+    blue_number,
+    green_draw_two,
+    blue_number,
+    blue_skip,
+    yellow_draw_four,
+    blue_number,
+};
+CHECK(front6 == expected);
+```
+
+#### Iterating Over Multiple Ranges
+
+``` cpp
+#include <range/v3/numeric.hpp>
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
+namespace views = ranges::views;
+
+auto hamming_distance(std::string const& s1, std::string const& s2) -> int {
+    auto different = views::zip_with(ranges::not_equal_to{}, s1, s2);
+    return ranges::accumulate(different, 0);
+}
+
+CHECK(hamming_distance("chew", "chop") == 2);
+CHECK(hamming_distance("hello", "world") == 4);
+```
+
+#### Inserting into Iterators
+
+Populating an existing vector with a single value:
+
+``` cpp
+auto rest_scores(std::vector<int>& scores) -> void {
+    ranges::fill(scores, 0);
+}
+```
+
+Copying values from one range to another existing range:
+
+``` cpp
+auto chars_to_words(std::vector<char> const& from, std::string& to) {
+    return ranges::copy(from, to.begin());
+}
+```
+
+We **will** have an **overflow problem** if `ranges::distance(from) > ranges::distance(to)`. E.g. `from` is `"Hello there"` and `to` is of size `5`
+To solve this, use `ranges::back_inserter()`
+
+``` cpp
+#include <range/v3/iterator.hpp>
+
+auto to = std::vector<char>();
+REQUIRE(to.empty());
+
+ranges::copy(from, ranges::back_inserter(to)); // works on containers with a push_back member like vector's
+CHECK(to == expected)
+```
+
+Alternative we can use `assign()`:
+
+``` cpp
+auto to = std::vector<char>(5);
+REQUIRE(ranges::distance(from) > ranges::distance(to));
+REQUIRE(not to.empty());
+
+to.assign(from.begin(), from.end());
+CHECK(to == expected);
+```
+
+Some insert iterators:
+
+| Function                 | What does it do?                                                                     |
+| ---                      | ---                                                                                  |
+| `ranges::back_inserter`  | Works on containers that have `push_back` (e.g. `std::vector`, `std::string`)        |
+| `ranges::front_inserter` | Works on containers that have `push_front` (e.g. `std::deque`, `std::list`)          |
+| `ranges::inserter`       | Works on containers that have insert (e.g. all the above, `absl::flat_hash_set/map`) |
+
+Say we want to insert a vector in the middle of another vector. We can do so as follows...
+
+``` cpp
+auto some_numbers = views::concat(views::iota(0, 50), views::iota(75, 100))
+                  | ranges::to<std::vector>;
+
+auto square = [](int const x) { return x * x; };
+auto more_numbers = views::iota(50, 75)
+                  | views::transform(square)
+                  | ranges::to<std::vector>;
+
+auto non_uniform_gap = ranges::adjacent_find(some_numbers,
+    [](int const x, int const y) { return y - x != 1; });
+some_numbers.insert(non_uniform_gap, more_numbers.begin(), more_numbers.end());
+```
+
+... but we didn't really need two vectors, since `more_numbers` is already an iterator
+
+``` cpp
+auto some_numbers = views::concat(views::iota(0, 50), views::iota(75, 100))
+                  | ranges::to<std::vector>;
+
+auto square = [](int const x) { return x * x; };
+auto more_numbers = views::iota(50, 75)
+                  | views::transform(square)
+                  | views::common;
+
+// views::common will adapt the previous slide's more_numbers'
+// begin and end into a type that has a _common_ begin and end
+// type (hence the name views::common).
+auto non_uniform_gap = ranges::adjacent_find(some_numbers,
+    [](int const x, int const y) { return y - x != 1; });
+some_numbers.insert(non_uniform_gap, more_numbers.begin(), more_numbers.end());
+```
+
+#### Mutable Iterators
+
+Mutable iterators are iterators with both a read and write operation.
+
+In the code snippet below, we want to copy the values of `from` to `to`.  
+Notice that `i` if modifiable when we don't want it to be:
+
+``` cpp
+auto from = std::vector<int>(10);
+auto to = std::vector<int>(10);
+
+// ...
+
+// We would use ranges::copy IRL
+for (auto i = from.begin(), j = to.begin(); i != from.end() and j != to.end(); ++i, ++j)
+{
+    *i = *j;
+}
+```
+
+We have `const_iterator` which make the iterator read-only:
+
+``` cpp
+// mutable iterator       (similar to `T&`, where T is any type)
+std::vector<T>::iterator
+
+// read-only iterator     (similar to `T const&`, where T is any type)
+std::vector<T>::const_iterator
+```
+
+To fix our problem before:
+
+``` cpp
+auto from = std::vector<int>(10);
+auto to = std::vector<int>(10);
+
+// ...
+
+// We would use ranges::copy IRL
+for (auto i = from.cbegin(), j = to.begin(); i != from.cend() and j != to.end(); ++i, ++j)
+    *i = *j; // compile-time error: can't write to a const_iterator
 }
 ```
