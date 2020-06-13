@@ -378,6 +378,19 @@ Note: `++i` is preferred over `i++`
 
 ### Ranges
 
+A guide to including range functions:
+
+``` cpp
+#include <range/v3/algorithm.hpp> // for algorithms
+#include <range/v3/iterator.hpp>  // for iterator-related stuff
+#include <range/v3/range.hpp>     // for ranges::distance and ranges::to
+#include <range/v3/view.hpp>      // for views
+
+// You can include specific algorithms and views
+#include <range/v3/algorithm/equal_range.hpp>
+#include <range/v3/view/filter.hpp>
+```
+
 Generating a hand of cards
 
 ``` cpp

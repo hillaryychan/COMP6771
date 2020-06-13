@@ -186,6 +186,8 @@ auto const i = 42;
 }
 ```
 
+Include gsl_lite with `#include <gsl/gsl-lite.hpp>`
+
 ## Functions
 
 Nullary functions (no parameters):
