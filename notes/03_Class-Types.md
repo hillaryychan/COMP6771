@@ -386,7 +386,7 @@ An **incomplete type** may only be used to define pointers and references, and i
 ``` cpp
 struct node {
     int data
-    // Node is incomplete -  this is invalide
+    // Node is incomplete -  this is invalid
     // This would also make no sense. What is sizeof(Node)?
     node next;
 };
@@ -405,7 +405,7 @@ struct node {
 
 **Constructors** define how class data members are initialised.  
 A constructor has the same name as the class and ***no return type***.  
-Default initialisation is handled through the default constructor. Unless we define our own constructors the compiler will declare a default constructor. This is known as teh **synthesised default constructor**.
+Default initialisation is handled through the default constructor. Unless we define our own constructors the compiler will declare a default constructor. This is known as the **synthesised default constructor**.
 
 ``` txt
 for each data member in declaration order
@@ -417,7 +417,7 @@ for each data member in declaration order
     Initialise it using its default constructor
 ```
 
-The synthesised default constructor is generated for a class only if it declared no constructors.  For each member, it calls the in-class initialiser if present, otherwise it calls the default constructor (except for trivial types like `int`).  
+The synthesised default constructor is generated for a class **only if** it declared no constructors.  For each member, it calls the in-class initialiser if present, otherwise it calls the default constructor (except for trivial types like `int`).  
 It cannot be generated when any data members are missing both in-class initialised and default constructors.
 
 ``` cpp
@@ -429,7 +429,7 @@ class C {
     int i_{0}; // in-class initialiser
     int j_;    // untouched memory
 
-    A a_; // This stops the default constructor from being synthesised
+    A a_;      // This stops the default constructor from being synthesised
     B b_;
 }
 
@@ -547,5 +547,147 @@ class MyClass {
 
 MyClass::~May noexcept {
     // Definition here
+}
+```
+
+### Explicit Type Conversions
+
+If a constructor for a class has 1 parameter, the compiler will create an implicit type conversion from the parameter to the class.  
+This **may** be the behaviour you want (but usually not). You have to **opt-out** of this implicit type conversion with the `explicit` keyword.
+
+``` cpp
+class age {
+public:
+    age(int age)
+    : age_{age} {}
+
+private:
+    int age_;
+};
+
+auto main() -> int {
+    // Explicitly calling the constructor
+    age a1{20};
+
+    // Explicitly calling the constructor
+    age a2 = age{20};
+
+    // Attempts to use an integer where an age is expected.
+    // Implicit conversion done. This seems reasonable.
+    age a3 = 20;
+}
+```
+
+``` cpp
+#include <vector>
+class intvec {
+public:
+    // This one allows the implicit conversion
+    // intvec(std::vector<int>::size_type length)
+    // : vec_(length, 0);
+
+    // This one disallows it.
+    explicit intvec(std::vector<int>::size_type length)
+    : vec_(length, 0) {}
+
+private:
+    std::vector<int> vec_;
+};
+
+auto main() -> int {
+    int const size = 20;
+    // Explictly calling the constructor.
+    intvec container1{size}; // Construction
+    intvec container2 = intvec{size}; // Assignment
+
+    // Implicit conversion.
+    // Probably not what we want.
+    // intvec container3 = size;
+}
+```
+
+### Const Objects
+
+Member functions are by default only possible on non-const objected.
+
+You can declare a `const` member function, which is valid on `const` objects. A `const` member function may only modify `mutable` members.  
+A **mutable** member should mean that the state of the member can change without the state of the object changing. Good uses of mutable members are rare. Mutable is not something you should set lightly. One example where it might be useful is a cache.
+
+``` cpp
+#include <iostream>
+#include <string>
+class person {
+public:
+    person(std::string const& name) : name_{name} {}
+    auto set_name(std::string const& name) -> void {
+        name_ = name;
+    }
+    auto get_name() -> std::string const& {
+        return name_;
+    }
+
+private:
+    std::string name_;
+};
+
+auto main() -> int {
+    person p1{"Hayden"};
+    p1.set_name("Chris");
+    std::cout << p1.get_name() << "\n";
+
+    person const p1{"Hayden"};
+    p1.set_name("Chris"); // WILL NOT WORK... WHY NOT?
+    std::cout << p1.get_name() << "\n"; // WILL NOT WORK... WHY NOT?
+}
+```
+
+### `this` Pointer
+
+A member function has an extra implicit parameter, named **this**.  
+`this` is a **pointer** to the object on behalf of which the function is called. A member function does not explicitly define it, but may explicitly use it. The compiler treats an unqualified reference to a class member as being made through the `this` pointer.
+
+``` cpp
+class foo {
+public:
+    foo(int const miles) {
+        this->kilometers_ = miles / 1.159;
+    }
+private:
+    int kilometers_;
+}
+// is the same as
+class foo {
+public:
+    foo(int const miles) {
+        kilometers_ = miles / 1.159;
+    }
+private:
+    int kilometers_;
+}
+```
+
+### Static Members
+
+Static functions and members belong to the class (i.e. every object), as opposed to a particular object. Static data has global lifetime (program start to program end). They are essentially **globals defined inside the scope of the class**.
+
+Use static members when something is associated with a class, but not a particular instance.
+
+``` cpp
+// For use with a database
+class user {
+public:
+    user(std::string const& name) : name_{name} {}
+    static auto valid_name(std::string const& name) -> bool {
+        return name.length() < 20;
+    }
+private:
+    std::string name_;
+}
+
+auto main() -> int {
+    auto n = std::string{"Santa Clause"};
+    if (user::valid_name(n)) {
+        user user1{n};
+    }
 }
 ```
