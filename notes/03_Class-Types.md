@@ -320,6 +320,8 @@ auto main() -> int {
 }
 ```
 
+Note: by convention we put class function declarations in the header files (`*.hpp`) and implementations/definitions in the source files (`*.cpp`).
+
 ### Classes and Structs in C++
 
 A `class` and a `struct` in C++ are almost exactly the same.  
@@ -414,7 +416,7 @@ for each data member in declaration order
     else if it is of a built-in type (numeric, pointer, bool, char, etc.)
         do nothing (leave it as whatever was in memory before)
     else
-    Initialise it using its default constructor
+        Initialise it using its default constructor
 ```
 
 The synthesised default constructor is generated for a class **only if** it declared no constructors.  For each member, it calls the in-class initialiser if present, otherwise it calls the default constructor (except for trivial types like `int`).  

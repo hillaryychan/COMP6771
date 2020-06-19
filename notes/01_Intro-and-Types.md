@@ -380,7 +380,7 @@ A reference is an *alias* for another object. You can use it as you would the or
 * can't be null
 * you can't change what they refer to once set
 
-It is preferable to passing arguments by reference rather than value
+It is preferable to passing arguments by reference rather than value. It is fine to pass primitive data types (`char`, `int` etc) by value because copying them take very little effort
 
 ``` cpp
 auto by_value(std::string const sentence) -> char;
