@@ -550,6 +550,16 @@ We can capture by **reference**:
 
 ```
 
+We **capture by value** when:
+
+* the variable may change, and we want the variable at the current time
+
+We **capture by reference** when:
+
+* the lifetime of the lambda may exceed the lifetime of the value
+* the variable may change and we want it to stay updated
+* the variable is unable to be copied, or expensive to be copied
+
 Example: two  players can swap a card of the same value (but for a different colour)
 
 ``` cpp

@@ -450,6 +450,8 @@ A constructor will:
 1. Construct all data members **in order of member declaration** (using the same rules as those used to initialise variables)
 2. Execute the body of the constructor: the code may **assign** values to the data members to override the initial values
 
+**Initialiser lists** and uniform initialisation avoid having to construct an object, and then reassign it to a different value after construction. It is more **efficient**, and for some types, you will not be able to compile without it.
+
 ``` cpp
 #include <string>
 
