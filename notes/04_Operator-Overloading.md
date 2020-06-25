@@ -206,6 +206,8 @@ This is where the spaceship operator is useful
 
 ### Overload: Spaceship Operator
 
+The spaceship operator does member-wise comparison
+
 ``` cpp
 #include <compare>
 #include <iostream>
@@ -277,6 +279,11 @@ auto const ordering = (p1 <=> p2) == std::partial_ordering::equivalent;
 std::cout << "p1 <=> p2 yields equivalent " << ordering << '\n';
 ```
 
+The `int`-based and `double`-based point use different ordering.  
+There are different types of **ordering** (or comparison); strong, partial and weak.
+
+In terms of ordering, **equivalent** means that the two objects are ***interchangeable***. **Unordered** means that the two objects cannot be compared.
+
 ``` cpp
 #include <compare>
                                         // Example types
@@ -293,6 +300,9 @@ std::strong_ordering::less              // * integers
 std::strong_ordering::equal             // * std:: string
 std::strong_ordering::greater
 ```
+
+If you explicitly define your own spaceship operator (i.e opposed to `auto operators<=>() = default`). You **must also define `operator==`**.
+Example:
 
 ``` cpp
 #include <compare>
