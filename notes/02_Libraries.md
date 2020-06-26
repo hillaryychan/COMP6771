@@ -67,7 +67,7 @@ Container operations vary in time and space complexity. Their performance has a 
 
 The complexity of common container operations:
 
-![container operations](../imgs/2-5_container-operations.png)
+![container operations](../imgs/02-5_container-operations.png)
 
 ### Sequence Containers
 
@@ -358,7 +358,7 @@ CHECK(more_cards != deck);
 
 **Iterators** are a common theme between containers, algorithms and ranges. They provide and intermediate representation for which containers an be used by algorithms.
 
-![iterators](../imgs/2-10_iterators.jpg)
+![iterators](../imgs/02-10_iterators.jpg)
 
 Algorithms go through containers using iterators and return an iterator as a result.
 
@@ -429,7 +429,7 @@ CHECK(*card_to_play == blue_number);
 
 `card_to_play` is an iterator at position `1` with value `blue_number`
 
-![ranges::find](../imgs/2-11_ranges-find.png)
+![ranges::find](../imgs/02-11_ranges-find.png)
 
 ``` cpp
 #include <range/v3/algorithm.hpp>
@@ -442,7 +442,7 @@ REQUIRE(card_to_play == hand.cend());
 
 `card_to_play` is an iterator at position `10` with no value since the card can't be fount
 
-![ranges::find](../imgs/2-11_ranges-find2.png)
+![ranges::find](../imgs/02-11_ranges-find2.png)
 
 #### Erasing a Single Specific Card
 
@@ -460,7 +460,7 @@ CHECK(*card_to_play = green_draw_two);
 
 `card_to_play` is an iterator at position `1` and value `green_draw_two` since `erase()` returns the iterator following the last removed element
 
-![find::erase](../imgs/2-11_find-erase.png)
+![find::erase](../imgs/02-11_find-erase.png)
 
 #### Getting a Range of Values
 
@@ -482,7 +482,7 @@ CHECK(ranges::all_of(first, last, [blue_number](card const x) {  // uses lambda 
 `ranges::equal_range` returns iterators of the beginning and end that match the given value  
 See more on lambda expressions [here](#lambda-expressions)
 
-![ranges::equal_range](../imgs/2-11_ranges-equal-range.png)
+![ranges::equal_range](../imgs/02-11_ranges-equal-range.png)
 
 #### Lambda Expressions
 

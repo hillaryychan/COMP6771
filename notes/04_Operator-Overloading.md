@@ -70,7 +70,7 @@ Disadvantages:
 
 Operator overload design:
 
-![operator overload design](../imgs/4-6_operator-overload-design.png)
+![operator overload design](../imgs/03.2-6_operator-overload-design.png)
 
 Use members when the operation is called in the context of a particular instance  
 Use friends when the operation is called without any particular instance (even if they don't require access to private details)
