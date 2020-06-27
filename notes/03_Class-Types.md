@@ -612,9 +612,9 @@ auto main() -> int {
 
 ### Const Objects
 
-Member functions are by default only possible on non-const objected.
+Member functions are by default only possible on non-const objected. That is, a non-`const` object can call `const` and non-`const` functions.
 
-You can declare a `const` member function, which is valid on `const` objects. A `const` member function may only modify `mutable` members.  
+You can declare a `const` member function, which is valid on `const` objects. That is, a `const` object can only all `const` functions. A `const` member function may only modify `mutable` members.  
 A **mutable** member should mean that the state of the member can change without the state of the object changing. Good uses of mutable members are rare. Mutable is not something you should set lightly. One example where it might be useful is a cache.
 
 ``` cpp

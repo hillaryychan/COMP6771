@@ -35,7 +35,7 @@ auto main() -> int {
 
 A class may declare `friend` functions or classes.
 
-Those functions/classes are non-member functions that may access private parts of the class.  
+Those functions/classes are non-member functions that may access private parts of the class. In other words, they are functions defined **outside** the class, but have the ability to access all private and protected members of the class  
 This is, in general, a ***bad idea***, but there are a few cases where it may be required:
 
 * Non-member operator overloads
@@ -50,6 +50,8 @@ Use friends when:
 * There is a piece of code very related to this particular class.
 
 ***In general, we prefer to define friends directly in the class they relate to.***
+
+**Note:** a **hidden friend** is a `friend` function that is **declared and defined** in the class.
 
 ## Operator Overloads
 
@@ -90,12 +92,13 @@ public:
     point(int x, int y)
     : x_{x}
     , y_{y} {};
-    friend std::ostream& operator<<(std::ostream& os, const point& type) {
+    friend std::ostream& operator<<(std::ostream& os, const point& p) {
         os << "(" << p.x_ << "," << p.y_ << ")";
         return os;
     }
-    friend std::istream& operator>>(std::istream& is, point& type) {
-        // To be done in tutorials
+    friend std::istream& operator>>(std::istream& is, point& p) {
+        is >> p.x_ >> p.y_;
+        return is;
     }
 private:
     int x_;
@@ -105,6 +108,53 @@ private:
 auto main() -> int {
     point p(1, 2);
     std::cout << p << '\n';
+}
+```
+
+### Overload: Compound Assignment
+
+Sometimes particular methods might not have any real meaning, and they should be omitted (in this case, what does dividing two points together mean).
+
+Each class can have any number of `operator+=` operators, but there can only be one `operator+=(X)` where X is a type.  That's why in this case we have two multiplier compound assignment operators
+
+``` cpp
+class point {
+public:
+    point(int x, int y)
+    : x_{x}
+    , y_{y} {};
+
+    point& operator+=(point const& p);
+    point& operator-=(point const& p);
+    point& operator*=(point const& p);
+    point& operator/=(point const& p);
+    point& operator*=(int i);
+
+private:
+    int x_;
+    int y_;
+};
+
+point& operator+=(point const& p) {
+    x_ += p.x_;
+    y_ += p.y_;
+    return *this;
+}
+
+point& operator-=(point const& p) {
+    x_ -= p.x_;
+    y_ -= p.y_;
+    return *this;
+}
+
+point& operator*=(point const& p) { /* it is not intuitive what should be done here */}
+
+point& operator/=(point const& p) { /* it is not intuitive what should be done here */}
+
+point& operator*=(int i) {
+    x_ *= i;
+    y_ *= i;
+    return *this;
 }
 ```
 
@@ -123,35 +173,6 @@ Many operators should be grouped together. This table should help you work out w
 | `operator--()`       | `operator++()`, `operator--(int)`                 |
 | `operator->()`       | `operator*()`                                     |
 | `operator+(T)`       | `operator-(T)`                                    |
-
-### Overload: Compound Assignment
-
-Sometimes particular methods might not have any real meaning, and they should be omitted (in this case, what does dividing two points together mean).
-
-Each class can have any number of `operator+=` operators, but there can only be one `operator+=(X)` where X is a type.  That's why in this case we have two multiplier compound assignment operators
-
-``` cpp
-class point {
-public:
-    point(int x, int y)
-    : x_{x}
-    , y_{y} {};
-
-    point& operator+=(point const& p) {
-        x_ += p.x_;
-        y_ += p.y_;
-        return *this;
-    }
-    point& operator-=(point const& p) { /* what do we put here? */}
-    point& operator*=(point const& p) { /* what do we put here? */}
-    point& operator/=(point const& p) { /* what do we put here? */}
-    point& operator*=(int i) { /* what do we put here? */}
-
-private:
-    int x_;
-    int y_;
-};
-```
 
 ### Overload: Relational Equality
 
