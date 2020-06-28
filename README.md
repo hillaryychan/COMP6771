@@ -1,5 +1,7 @@
 # COMP6771 - Advanced C++ Programming
 
+[C++ Toolchain](notes/cpp-toolchain.md) (not assessable)
+
 1. [Intro and Types](notes/01_Intro-and-Types.md)
 2. [Libraries](notes/02_Libraries.md)
 3. [Class Types](notes/03_Class-Types.md)
