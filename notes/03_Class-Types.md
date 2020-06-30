@@ -65,6 +65,13 @@ auto main() -> {
 } // v11, v12, v13, v41, v41 destructors called here
 ```
 
+Note: construction using:
+
+* `std::vector<int> a(1,2)` is known as **direct initialisation** (we prefer not to do this)
+* `std::vector<int> a{1,2}` is known as **uniform initialisation**
+* `std::vector<int> a = {1,2}` is also known as uniform initialisation
+* `std::vector<int> c = a` is a **copy construction**
+
 This also works for basic types, **but the default constructor has to be called manually** otherwise it will contain what was previously in memory. This potential bug can be hard to detect due to how function stacks work (e.g. a variable may *happen* to be `0`). It can be especially problematic with pointers.
 
 ``` cpp

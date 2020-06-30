@@ -68,7 +68,7 @@ Disadvantages:
 
 * Lack of context on operations
 
-**Only create an overload if you type has a single, obvious meaning to an operator**.
+**Only create an overload if your type has a single, obvious meaning to an operator**.
 
 Operator overload design:
 
