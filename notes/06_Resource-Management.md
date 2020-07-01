@@ -66,7 +66,7 @@ If all data members have one of these defined, then the class should automatical
 
 ## Destructors
 
-**Destructors** are called when the object goes out of scope, however, this does not occur for reference objects. They are implicitly `noexcept`.
+**Destructors** are called when the object goes out of scope, however, this does not occur for reference objects (because they don't own anything). They are implicitly `noexcept`.
 
 In the code above, when `vec_short` goes out of scope, destructors are called on each member.
 
@@ -161,8 +161,10 @@ You need to clean up the destination first. The copy-and-swap idiom makes this t
 
 ``` cpp
 my_vec& my_vec::operator=(my_vec const& orig) {
-    // create a new vector containing the contents of the original
-    // and then swap the values in the new vector and the current vector
+    // create a copy of what we want to copy (i.e. orig) then
+    // swap the values in the new vector and the current vector
+    // the copy will contain the previous values and
+    // will be destroyed when out of scope (i.e this function)
     return my_vec(orig).swap(*this);
 }
 
@@ -226,6 +228,14 @@ auto main() -> int {
 An rvalue reference formal parameter means that the value was disposable from the caller of the function.  
 If `outer` modified the value, no one would care/notice since the caller (`main`) has promised that it won't be used anymore.  
 If `inner` modified the value, `outer` would care/notice since the caller (`outer`) has never made such a promise. An rvalue reference parameter is an lvalue inside the function.
+
+## Reference Binding
+
+Note that:
+
+* `T&&` binds to rvalues only
+* `T&` binds to lvalues only
+* **`T const&` binds to BOTH lvalues and rvalues**
 
 ## std::move
 
@@ -491,22 +501,32 @@ Lesson: **do not return references to variables local to the function returning*
 
 ``` cpp
 auto okay(int& i) -> int& {
+    // pass in an int reference and return an int reference
+    // only binds to lvalues
     return i;
 }
 
 auto okay(int& i) -> int const& {
+    // pass in an int reference and make it not modifiable
     return i;
 }
 
 auto questionable(int const& i) -> int const& {
+    // can bind to r values
+    // if you pass in a temporary, you will return a reference to it
+    // but the temporary when be destroyed on returns (out of scope)
     return i;
 }
 
 auto not_okay(int i) -> int& {
+    // pass in a copy, return a reference
+    // copy will be destroyed on return (out of scope)
     return i;
 }
 
 auto not_okay() -> int& {
+    // reference to local variable returned
+    // will be destroyed on return (out of scope)
     auto i = 0;
     return i;
 }
