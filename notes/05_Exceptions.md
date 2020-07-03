@@ -327,3 +327,36 @@ Use `noexcept` to guarantee that callers do not need to worry about exception ha
 You can use `noexcept` to say that you don't mind your whole program ending if something goes wrong in this function.  
 
 We can mark all **class destructors** as `noexcept`, as destructors aren't allowed to throw exceptions
+
+## Testing Exceptions
+
+* checking `expr` does not throw an exception
+
+    ``` cpp
+    CHECK_NOTHROW(expr);
+    ```
+
+* checking `expr` throws an exception
+
+    ``` cpp
+    CHECK_THROWS(expr);
+    ```
+
+* checking `expr` throws type (or something derived from type)
+
+    ``` cpp
+    CHECK_THROWS_AS(expr, type);
+    ```
+
+* checking `expr` throws an exception with a message
+
+    ``` cpp
+    namespace Matchers = Catch::Matchers;
+    CHECK_THROWS_WITH(expr, Matchers::Messge("message"));
+    ```
+
+* `CHECK_THROW_AS` and `CHECK_THROWS_WITH` in a single check:
+
+    ``` cpp
+    CHECK_THROW_MATCHES(expr, type, Matchers::Message("message"));
+    ```
