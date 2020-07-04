@@ -194,7 +194,7 @@ Lvalue references to `const` look like `T& const`
 A lvalue reference denotes an object whose resource cannot be reused. This includes most objects (e.g. variable, variable[0]).  
 Once the lvalue reference goes out of scope, it may still be needed.
 
-## Rvalue References
+### Rvalue References
 
 Rvalue references look like `T&&`.  
 
@@ -229,7 +229,7 @@ An rvalue reference formal parameter means that the value was disposable from th
 If `outer` modified the value, no one would care/notice since the caller (`main`) has promised that it won't be used anymore.  
 If `inner` modified the value, `outer` would care/notice since the caller (`outer`) has never made such a promise. An rvalue reference parameter is an lvalue inside the function.
 
-## Reference Binding
+### Reference Binding
 
 Note that:
 
