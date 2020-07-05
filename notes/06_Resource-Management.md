@@ -33,8 +33,8 @@ class my_vec {
     // Move constructor
     my_vec(my_vec&&) noexcept = default;
     // Move assignment
-
     my_vec& operator=(my_vec&&) noexcept = default;
+
     // Destructor
     ~my_vec() = default;
 
@@ -247,7 +247,7 @@ T&& move(T& value) {
 }
 ```
 
-It converts its argument into an rvalue. Calling `move` is essentially saying "I don't care about this anymore". All this does is allow the compiler to use rvalue reference overloads.
+It converts its argument into an rvalue. Calling `move` is essentially saying *"I don't care about this anymore"*. All this does is allow the compiler to use rvalue reference overloads.
 
 ``` cpp
 auto inner(std::string&& value) -> void {
