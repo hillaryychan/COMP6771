@@ -619,10 +619,8 @@ auto main() -> int {
 
 ### Const Objects
 
-Member functions are by default only possible on non-const objected. That is, a non-`const` object can call `const` and non-`const` functions.
-
-You can declare a `const` member function, which is valid on `const` objects. That is, a `const` object can only all `const` functions. A `const` member function may only modify `mutable` members.  
-A **mutable** member should mean that the state of the member can change without the state of the object changing. Good uses of mutable members are rare. Mutable is not something you should set lightly. One example where it might be useful is a cache.
+Member functions are by default only callable on non-const objected. That is, a non-`const` object can call `const` and non-`const` functions.  
+You can declare a `const` member function, which is valid on `const` objects. That is, a `const` object can only all `const` functions.
 
 ``` cpp
 #include <iostream>
@@ -649,6 +647,33 @@ auto main() -> int {
     person const p1{"Hayden"};
     p1.set_name("Chris"); // WILL NOT WORK... WHY NOT?
     std::cout << p1.get_name() << "\n"; // WILL NOT WORK... WHY NOT?
+}
+```
+
+A `const` member function cannot modify class members BUT it may only modify `mutable` members.  
+A **mutable** member should mean that the state of the member can change without the state of the object changing. Good uses of mutable members are rare. Mutable is not something you should set lightly. One example where it might be useful is a cache.
+
+``` cpp
+#include <iostream>
+#include <string>
+
+class entity {
+public:
+    auto get_name() const -> std::string const& {
+        // since function is const we can't do
+        // name_ = std::string("John");
+        ++debug_count;
+        return name_;
+    }
+private:
+    std::string name_;
+    mutable int debug_count = 0;
+}
+
+aut main() -> {
+    auto const e = Entity();
+    e.get_name();
+    std::cin.get();
 }
 ```
 
