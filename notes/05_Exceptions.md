@@ -251,14 +251,14 @@ int main() {
 
 Operations performed have various levels of safety:
 
-* no-throw (failure transparance)
+* no-throw (failure transparency)
 * strong exception safety (commit-or-rollback)
 * weak exception safety (no-lea)
 * no exception safety
 
 ### No-throw Guarantee
 
-**No-throw guarantee** (or failure transparency) operations are guaranteed to succeed, even in exceptional circumstances. That is exceptions may occur, but they are handled gracefully.
+**No-throw guarantee** (or failure transparency) operations are guaranteed to succeed, even in exceptional circumstances. That is, exceptions may occur, but they are handled gracefully.
 
 No exceptions are visible to clients. This is the same, for all intents and purposes, as `noexcept` in C++
 
@@ -274,7 +274,7 @@ Examples:
 **Strong exception safety** (or "commit-or-rollback") operations can fail, but failed operations are guaranteed to have no visible effects.  
 This is probably the most common level of exception safety for types in C++.
 
-All your copy-constructors should generally follow these semantics. This is similar for cop-assignment:
+All your copy-constructors should generally follow these semantics. This is similar for copy-assignment:
 
 * copy-and-swap idiom (usually) follows these semantics
 * can be difficult when manually writing copy-assignment
@@ -321,7 +321,7 @@ public:
 }
 ```
 
-A `noexcept`-specified function tell the compiler to not generate recovery code. An exception thrown in a no except function will terminate your program.
+A `noexcept`-specified function tell the compiler to not generate recovery code. An exception thrown in a `noexcept` function will terminate your program.
 
 Use `noexcept` to guarantee that callers do not need to worry about exception handling.  
 You can use `noexcept` to say that you don't mind your whole program ending if something goes wrong in this function.  
