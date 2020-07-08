@@ -162,17 +162,7 @@ point& operator*=(int i) {
 
 Many operators should be grouped together. This table should help you work out which are minimal set of operators to overload for any particular operator.
 
-| If you overload      | Then you should also overload                     |
-| ---                  | ---                                               |
-| `operator OP=(T, U)` | `operator OP(T, U)`                               |
-| `operator+(T, U)`    | `operator+(U, T)`                                 |
-| `operator-(T, U)`    | `operator+(T, U)`, `operator+(T)`, `operator-(T)` |
-| `operator/(T, U)`    | `operator*(T, U)`                                 |
-| `operator%(T, U)`    | `operator/(T, U)`                                 |
-| `operator++()`       | `operator++(int)`                                 |
-| `operator--()`       | `operator++()`, `operator--(int)`                 |
-| `operator->()`       | `operator*()`                                     |
-| `operator+(T)`       | `operator-(T)`                                    |
+![operator pairings](../imgs/03.2-9_operator-pairings.png)
 
 ### Overload: Relational Equality
 
