@@ -378,18 +378,25 @@ Note: `++i` is preferred over `i++`
 
 ### Ranges
 
+`libc++` doesn't support ranges yet, which is why we're using `range-v3` instead of standard ranges. For the purposes of the course, `range-v3` and standard ranges are almost 1:1 in nature.  
 A guide to including range functions:
 
 ``` cpp
 #include <range/v3/algorithm.hpp> // for algorithms
 #include <range/v3/iterator.hpp>  // for iterator-related stuff
 #include <range/v3/range.hpp>     // for ranges::distance and ranges::to
-#include <range/v3/view.hpp>      // for views
+#include <range/v3/view.hpp>      // for views (in standard C++ they live in <ranges>)
 
 // You can include specific algorithms and views
 #include <range/v3/algorithm/equal_range.hpp>
 #include <range/v3/view/filter.hpp>
 ```
+
+Note:
+
+* prefer `std::span` to `ranges::span` and `std::exchange` to `ranges::exchange`
+* `ranges::begin`, `ranges::end`, etc., are preferred over `std::begin`, `std::end`, etc. see [here](TODO)
+* `ranges::swap` is preferred over `std::swap` for similar reasons to `ranges::begin`.
 
 Generating a hand of cards
 
