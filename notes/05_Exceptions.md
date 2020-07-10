@@ -328,6 +328,11 @@ You can use `noexcept` to say that you don't mind your whole program ending if s
 
 We can mark all **class destructors** as `noexcept`, as destructors aren't allowed to throw exceptions
 
+When to use `noexcept`:
+
+* when the function **cannot** throw exceptions
+* when the function **can** throw exceptions, but you don't want other functions catching the exception and prefer the whole program to crash
+
 ## Testing Exceptions
 
 * checking `expr` does not throw an exception
