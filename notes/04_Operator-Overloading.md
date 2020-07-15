@@ -72,7 +72,7 @@ Disadvantages:
 
 Operator overload design:
 
-![operator overload design](../imgs/03.2-6_operator-overload-design.png)
+![operator overload design](../imgs/03-2-6_operator-overload-design.png)
 
 Use members when the operation is called in the context of a particular instance  
 Use friends when the operation is called without any particular instance (even if they don't require access to private details)
@@ -162,7 +162,7 @@ point& operator*=(int i) {
 
 Many operators should be grouped together. This table should help you work out which are minimal set of operators to overload for any particular operator.
 
-![operator pairings](../imgs/03.2-9_operator-pairings.png)
+![operator pairings](../imgs/03-2-9_operator-pairings.png)
 
 ### Overload: Relational Equality
 

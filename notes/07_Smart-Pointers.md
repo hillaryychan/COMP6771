@@ -195,7 +195,7 @@ Use a shared pointer if either:
 * An object has multiple owners, and **you don't know which one will stay around longest**
 * You need temporary ownership (outside scope of this course). This is very rare.
 
-![leak freedom](../imgs/05.2-17_leak-freedom.png)
+![leak freedom](../imgs/05-2-17_leak-freedom.png)
 
 ## Stack Unwinding
 
