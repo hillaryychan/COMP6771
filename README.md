@@ -9,4 +9,4 @@
 5. [Exceptions](notes/05_Exceptions.md)
 6. [Resource Management](notes/06_Resource-Management.md)
 7. [Smart Pointers](notes/07_Smart-Pointers.md)
-8. [Templates](notes/08_Templates-Intro.md)
+8. [Templates](notes/08_Templates.md)
