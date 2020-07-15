@@ -58,7 +58,7 @@ To use standard exceptions we use `#include <stdexcept>`. All exceptions inherit
 
 ## Conceptual Structure
 
-Exceptions are treated like lvalues (see [TODO](TODO)). There are limited type conversions that exist; non `const` to `const` and other conversion which will no be covered.
+Exceptions are treated like lvalues (see [lvalues](06_Resource-Management.md#lvalue-references)). There are limited type conversions that exist; non `const` to `const` and other conversion which will no be covered.
 
 General structure for exception handling with `try catch` blocks
 

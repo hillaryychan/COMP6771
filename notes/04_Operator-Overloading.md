@@ -395,8 +395,8 @@ Asserts are stripped out of optimised builds.
 
 ### Overload: Increment/Decrement
 
-Prefix: `++x` or `--x` returns lvalue reference (more in [week 5](TODO))  
-Postfix: `++x` or `--x` returns rvalue reference (more in [week 5](TODO))
+Prefix: `++x` or `--x` returns lvalue reference (more in [references](06_Resource-Management.md#references))  
+Postfix: `++x` or `--x` returns rvalue reference (more in [references](06_Resource-Management.md#references))
 
 In terms of performance, prefix > postfix  
 They are also a different operator for getting and setting

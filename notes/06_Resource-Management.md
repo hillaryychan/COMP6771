@@ -10,7 +10,7 @@ Some special things we can do with objects are:
 * Copy
 * Move
 
-When writing a class, always consider the ***"rule of 5"***:
+When writing a class, always consider the ***"rule of five"***:
 
 * Destructor
 * Move assignment
@@ -468,7 +468,7 @@ Explicitly doing this tells the reader of your code that you have carefully cons
 
 Every resource should be owned by either
 
-* another resource (e.g. [smart pointer](TODO), data member)
+* another resource (e.g. [smart pointer](07_Smart-Pointers.md), data member)
 * the stack
 * a nameless temporary variable
 
