@@ -191,14 +191,12 @@ concept semiregular = std::copyable<T> and std::default_initializable<T>;
 Iterators let us write a generic find:
 
 ``` cpp
-{
-    auto const v = std::deque<int>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    auto result = ranges::find(v.begin(), v.end(), 6);
-    if (result != v.end()) {
-        std::cout << "Found 6\n";
-    } else {
-        std::cout << "Didn't find 6.\n";
-    }
+auto const v = std::deque<int>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+auto result = ranges::find(v.begin(), v.end(), 6);
+if (result != v.end()) {
+    std::cout << "Found 6\n";
+} else {
+    std::cout << "Didn't find 6.\n";
 }
 ```
 
@@ -382,7 +380,7 @@ A type `I` models the concept `std::input_iterator` if:
 2. `I` models `std::indirectly_readable`
 3. `I::iterator_catefgory` is a type alias derived from `std::input_iterator_tag`
 
-Input iterators let us write a generic find:
+Input iterators let us write a generic find (see complete implementation at [sentinels](#sentinels)):
 
 ``` cpp
 template<std::input_iterator I, typename T>
@@ -427,3 +425,197 @@ See more on `std::input_iterator` at [cppreference](https://en.cppreference.com/
 #### Readable Iterators TL;DR
 
 ![readable iterators tldr](../imgs/07-2-94_readable-iterators-tldr.png)
+
+### Sentinels
+
+Consider the counted iterators below:
+
+``` cpp
+// We leverage this through range-v3 in 20T2
+// (it's available as std:: in GCC 10)
+template<std::input_iterator I>
+counted_iterator<I>::counted_iterator(I first, std::iter_difference_t<I> n);
+std::ranges::find(std::counted_iterator{first, 10},
+                  std::counted_iterator<int>(), // well, that's a bit weird
+                  value)
+```
+
+It's weird because we are giving meaning to an arbitrary value, and it doesn't really express intentions to the reader.  
+It's also limiting, because we can't express any additional information. What if we wanted to also stop on the first even `int`.
+
+A **sentinel** is a type that denotes the end of a range. It might be an iterator of the same type (like with containers), or it might be a completely different type.
+
+Type `S` and `I` model the concept `std::sentinel_for<S, I>` if:
+
+1. `I` models `std::input_or_output_iterator`
+2. `S` models `std::semiregular`
+
+Let `i` be an object of type `I` and `s` be an object of type `S`
+
+1. `i == s` is well-defined (i.e. it return `bool` and we have the other three)
+2. If `i != s` is true, then `i` is dereference-able
+
+See more on `sentinel_for` at [cppreference](https://en.cppreference.com/w/cpp/iterator/sentinel_for)
+
+The [**default sentinel**](https://en.cppreference.com/w/cpp/iterator/default_sentinel_t) is type-based; a way of deferring the comparison rule to the iterator when there's no meaningful definition for an end value.
+
+``` cpp
+std::ranges::find(std::counted_iterator(first, 10),
+                  std::default_sentinel,
+                  value);
+
+template<std::input_iterator I>
+auto counted_iterator<I>::operator==(std::default_sentinel) const -> bool {
+    return n_ == 0;
+}
+```
+
+The [**unreachable sentinel**](https://en.cppreference.com/w/cpp/iterator/unreachable_sentinel_t) is a way of saying "there is no end to this range".
+
+``` cpp
+struct unreachable_sentinel_t {
+    template<std::weakly_incrementable I>
+    friend constexpr bool operator==(unreachable_sentinel_t, I const&) noexcept {
+        return false;
+    }
+}
+```
+
+Completing out implementation of `find`:
+
+``` cpp
+template<std::input_iterator I, std::sentinel_for<I> S, typename T>
+requires std::indirect_binary_predicate<ranges::equal_to, I, T const*>
+auto find(I first, S last, T const& value) -> I {
+    for (; first != last; ++first) {
+        if (*first == value) {
+            return first;
+        }
+    }
+    return first;
+}
+```
+
+### Relationship Between Iterators and Ranges
+
+Let's say there's an object `r` of type `R`
+
+#### `std::ranges::begin`
+
+``` cpp
+template<typename R>
+std::input_or_output_iterator auto std::ranges::being(R& r);
+```
+
+* returns an object that models `std::input_or_output_iterator`
+* works on lvalues and sometimes on rvalues
+* works on types that use `r.begin()` (e.g. `std::vector`)
+* works on types that use `begin(r)` without needing to do the following in every scope:
+
+    ``` cpp
+    using std::begin;
+    auto a = begin(r);
+    // Example usage:
+    auto i = std::ranges::begin(r);
+    ```
+
+`std::iterator_t<R>` is defined as the deduced return type for `std::ranges::begin(r)`
+
+See more on `std::ranges::begin` at [cppreference](https://en.cppreference.com/w/cpp/ranges/begin)
+
+#### `std::ranges::end`
+
+``` cpp
+template<typename R>
+std::sentinel_for<std::ranges::iterator_t<R>> auto std::ranges::end(R&& r);
+```
+
+* return an object that models `std::sentinel_for<std::iterator_t<R>>`
+* works on lvalues and sometimes rvalues
+* works on types that use `r.end()` (e.g. `std::vector`)
+* works on types that use `end(r)` without needing to do the following in every scope:
+
+    ``` cpp
+    using std::end;
+    auto a = end(r);
+    // Example usage
+    auto i = std::ranges::end(r);
+    ```
+
+`std::sentinel_t<R>` is defined as the deduced return type for `std::ranges::end(r)`
+
+See more on `std::ranges::end` at [cppreference](https://en.cppreference.com/w/cpp/ranges/range)
+
+#### `std::ranges:range`
+
+`R` models the concept `range` when:
+
+* `R` is a valid type parameter for both `std::ranges::begin` and `std::ranges::end`
+* `ranges::begin(r)` returns an iterator in amortised `O(1)` time
+* `ranges::end(r)` returns a sentinel in amortised `O(1)` time
+* `[ranges::being(r), ranges::end(r))` denotes a valid range (i.e. there's a finite number of iterations between the two)
+
+``` cpp
+template<typename T>
+concept range = requires(R& r) {
+    std::ranges::begin(r); // returns an iterator
+    std::ranges::end(r);   // returns a sentinel for that iterator
+}
+```
+
+Note: `std::ranges::begin(r)` is not required to return the same result on each call
+
+See more on `std::ranges::range` at [cppreference](https://en.cppreference.com/w/cpp/ranges/range)
+
+#### `std::ranges::input_range`
+
+`input_range` refines `range` to make sure `ranges::being(r)` returns an input iterator
+
+``` cpp
+template<typename T>
+concept input_range = std::ranges::range<T> and std::input_iterator<std::ranges::iterator_t<T>>;
+```
+
+#### Range-Based Find
+
+``` cpp
+template<ranges::input_range R, typename T>
+requires std::indirect_binary_predicate<ranges::equal_to,
+                                        ranges::iterator_t<R>,
+                                        const T*>
+
+auto find(R&& r, T const& value) -> ranges::borrowed_iterator_t<R> {
+    return comp6771::find(ranges::begin(r), ranges::end(r), value);
+}
+```
+
+The range-based `find` defers to the iterator-based `find`. We prefer this algorithm when we need both begin and end, as opposed to arbitrary iterators, so that we don't mix iterators up and create invalid ranges (it's also more readable).
+
+`ranges::borrowed_iterator_t<R>` is the same as `ranges::iterator_t<R>` if `R` is an l value reference or a reference to a borrowed range (not discussed), and a non-iterator otherwise
+
+``` cpp
+auto v = std::vector<int>{0, 1, 2, 3};
+ranges::find(v, 2);                   // returns an iterator
+ranges::find(views::iota(0, 100), 2); // returns an iterator
+
+ranges::find(std::vector<int>[0, 1, 2, 3], 2) // returns ranges::dangling which is more useful
+                                              // than void (better compile time diagnostic info)
+```
+
+Find last
+
+``` cpp
+template<std::input_iterator I, std::sentinel_for<I> S, class Val>
+requires std::indirect_relation<ranges::equal_to, I, Val const*>
+auto find_last(I first, S last, Val const& value) -> I {
+    auto cache = std::optional<I>();
+    for (; first != last; ++first) {
+        if (*first == value) {
+            cache = first;
+        }
+    }
+    return cache.value_or(std::move(first));
+}
+```
+
+`I` isn't guaranteed to model `std::copyable`. Even if it were, `I` is only guaranteed to work for a single pass.
