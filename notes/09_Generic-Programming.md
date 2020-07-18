@@ -229,6 +229,11 @@ if (result != v.end()) {
 }
 ```
 
+Quick links to tl;drs cause this is too damn long:
+
+* [readable iterators](#readable-iterators-tldr)
+* [ranges](#ranges-tldr)
+
 ### Iterator Invalidation
 
 An **iterator** is an abstract notion of a **pointer**. When we modify a container we are iterating through, iterators may be invalidated. Using an invalid iterator results in undefined behaviour.
