@@ -127,7 +127,7 @@ private:
 };
 ```
 
-Instead we can use a class template:
+Instead we can use a class template; class templates allow us to create a class that can work with multiple data types.
 
 ``` cpp
 // stack.h
