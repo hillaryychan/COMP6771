@@ -234,6 +234,10 @@ Quick links to tl;drs cause this is too damn long:
 * [readable iterators](#readable-iterators-tldr)
 * [forward iterators](#forward-iterators-tldr)
 * [bidirectional iterators](#bidirectional-iterators-tldr)
+* [random access iterators](#random-access-iterators)
+* [writeable iterators](#writeable-iterators)
+* [output iterators](#output-iterators)
+* [const iterators](#iterators-and-const)
 
 ### Iterator Invalidation
 
