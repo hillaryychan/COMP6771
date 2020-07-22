@@ -322,6 +322,7 @@ A type `I` models the concept `std::indirectly_readable` if:
 Generating [`iter_`](https://en.cppreference.com/w/cpp/iterator/iter_t) types for a doubly linked list:
 
 ``` cpp
+// class definition
 template<typename T>
 class linked_list {
 public:
@@ -337,18 +338,20 @@ private:
 ```
 
 ``` cpp
+// iterator definition
 template<typename T>
 class linked_list<T>::iterator {
 public:
     using value_type = T; // std::iter_value_t<iterator> is value_type
 
+    // dereference to access iterator value
     auto operator*() const noexcept -> value_type const& {
         // iter_reference_t<iterator> is value_type&
         // iter_rvalue_reference<iterator> is value_type&&
         return pointee_->value;
     }
 private:
-    node* pointee_;
+    node* pointee_; // current iterator position
 
     friend class linked_list<T>;
 
@@ -386,6 +389,7 @@ public:
 
     auto operator*() const noexcept -> value_type const& { /* ... */ }
 
+    // a very weak "pre-increment" operator
     auto operator++() -> iterator& {
         pointee_ = pointee_->next.get();
         return *this;
@@ -417,7 +421,7 @@ A type `I` models the concept `std::input_iterator` if:
 2. `I` models `std::indirectly_readable`
 3. `I::iterator_category` is a type alias derived from `std::input_iterator_tag`
 
-Input iterators let us write a generic find (see complete implementation at [sentinels](#sentinels)):
+Input iterators let us write a generic `find` (see complete implementation at [sentinels](#sentinels)):
 
 ``` cpp
 template<std::input_iterator I, typename T>
@@ -442,7 +446,7 @@ class linked_list<T>::iterator {
 public:
     using value_type = T;
     using difference_type = std::ptrdiff_t;
-    using iterator_category = std::input_iterator_tag; // iterator_category is a type that is derived from input_iterator _tag
+    using iterator_category = std::input_iterator_tag; // iterator_category is a type that is derived from input_iterator_tag
                                                        // "any type is derived from itself"
 
     iterator() = default;
@@ -518,6 +522,7 @@ struct unreachable_sentinel_t {
 Completing out implementation of `find`:
 
 ``` cpp
+// now using a proper sentinel
 template<std::input_iterator I, std::sentinel_for<I> S, typename T>
 requires std::indirect_binary_predicate<ranges::equal_to, I, T const*>
 auto find(I first, S last, T const& value) -> I {
@@ -642,6 +647,7 @@ class linked_list {
 public:
     class iterator;
 
+    // add a begin and end of the iterator to public interface
     auto begin() const -> iterator { return head_; }
     auto end() const -> iterator { return tail_; }
 private:
