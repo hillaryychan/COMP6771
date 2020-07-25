@@ -145,11 +145,21 @@ public:
             os << i << " ";
         return os;
     }
-    auto push(T const& item) -> void;
-    auto pop() -> void;
-    auto top() -> T&;
-    auto top() const -> const T&;
-    auto empty() const -> bool;
+    auto push(T const& item) -> void {
+        stack_.push_back(item);
+    }
+    auto pop() -> void {
+        stack_.pop_back();
+    }
+    auto top() -> T& {
+        return stack_.back();
+    }
+    auto top() const -> const T& {
+        return stack_.back();
+    }
+    auto empty() const -> bool {
+        return stack_.empty();
+    }
 
 private:
     std::vector<T> stack_;
@@ -158,35 +168,6 @@ private:
 #include "./stack.tpp"
 
 #endif // STACK_H
-```
-
-``` cpp
-// stack.tpp
-#include "./demo705-classtemp.h"
-template<typename T>
-auto stack<T>::push(T const& item) -> void {
-    stack_.push_back(item);
-}
-
-template<typename T>
-auto stack<T>::pop() -> void {
-    stack_.pop_back();
-}
-
-template<typename T>
-auto stack<T>::top() -> T& {
-    return stack_.back();
-}
-
-template<typename T>
-auto stack<T>::top() const -> T const& {
-    return stack_.back();
-}
-
-template<typename T>
-auto stack<T>::empty() const -> bool {
-    return stack_.empty();
-}
 ```
 
 ``` cpp
@@ -238,7 +219,7 @@ stack<T>::~stack() { }
 
 ## Inclusion Compilation Model
 
-If we try to compile the following code wiht `g++ min.cpp, main.cpp -o main`, we'll get a compilation error:
+If we try to compile the following code with `g++ min.cpp, main.cpp -o main`, we'll get a compilation error:
 
 ``` cpp
 // min.h
@@ -344,7 +325,7 @@ auto main() -> int {
 }
 ```
 
-The exact same principles will apply for classes; implementations must be in the header file, and the compiler should only behave as it one `stack<int>` was instantiated
+The exact same principles will apply for classes; implementations must be in the header file, and the compiler should only behave as it one `stack<int>` was instantiated. It is also generally preferred **not** to use `.tpp` files as they are "archaic" and "error-prone". We are better off having template definitions being written in the body of the class in the `.h[pp]` file.
 
 ## Static Members
 
