@@ -10,6 +10,6 @@
 6. [Resource Management](notes/06_Resource-Management.md)
 7. [Smart Pointers](notes/07_Smart-Pointers.md)
 8. [Templates](notes/08_Templates.md)
-9. [Generic Programming](notes/09_Generic-Programming.md)
+9. [Generic Programming (Custom Iterators)](notes/09_Generic-Programming.md)
 10. [Advanced Templates](notes/10_Advanced-Templates.md)
 11. [Advanced Types](notes/11_Advanced-Types.md)
