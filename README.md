@@ -13,3 +13,4 @@
 9. [Generic Programming (Custom Iterators)](notes/09_Generic-Programming.md)
 10. [Advanced Templates](notes/10_Advanced-Templates.md)
 11. [Advanced Types](notes/11_Advanced-Types.md)
+12. [Runtime Polymorphism (Advanced Objected-Oriented Programming)](notes/12_Runtime-Polymorphism.md)
