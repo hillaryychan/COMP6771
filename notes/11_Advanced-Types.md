@@ -138,8 +138,7 @@ Notes:
 * template `T&&` binds to **everything**;
 
     ``` cpp
-    template <typename T>
-    void foo(T&& a);
+    template <typename T> void foo(T&& a);
     ```
 
 Examples:
@@ -191,7 +190,7 @@ auto main() -> int {
 
 ### Motivation for Forwarding Functions
 
-What's wrong with this code?
+**Attempt 1**: Take in a value. What's wrong with this code?
 
 ``` cpp
 template <typename T>
@@ -200,9 +199,9 @@ auto wrapper(T value) {
 }
 ```
 
-TODO
+It won't work if we pass in a non-copyable type and won't be efficient if we pass in a type that is expensive to copy.
 
-This solves our previous problem:
+**Attempt 2**: Take in a const reference
 
 ``` cpp
 template <typename T>
@@ -211,38 +210,112 @@ auto wrapper(const T& value) {
 }
 ```
 
-But it creates a new problem; the code won't work if `fn` takes in rvalues.  
-We could make a separate rvalue definition and try template `T&&`, which binds to everything correctly:
+But it creates a new problem; if the wrapper function needs to modify the value, the code won't compile. If we pass in a rvalue, the wrapper function will treat it as an lvalue.  
 
 ``` cpp
-template <typename T>
-auto wrapper(const T& value) {
-    return fn(value);
-}
-
 // Calls fn(x)
-// Should call fn(std::move(x))
+// should call fn(std::move(x))
 wrapper(std::move(x));
 ```
 
-This solves our previous problem, but we still need to come up with a function that matches the pseudocode.
+**Attempt 3:** Take in a mutable reference. What's wrong with this?
+
+``` cpp
+template <typename T>
+auto wrapper(T& value) {
+    return fn(value);
+}
+```
+
+If we pass in a const object, the code won't compile since it will lose its "const"-ness.  
+If we pass in a rvalue, it will be treated as a lvalue
+
+#### Interlude: Reference Collapsing
+
+An rvalue reference to an rvalue reference becomes ("collapses into") an rvalue reference  
+All other reference (i.e. all combinations involving a lvalue reference) collapses into an lvalue reference.
+
+``` txt
+T& &   -> T&
+T&& &  -> T&
+T& &&  -> T&
+T&& && -> T&&
+```
+
+### Motivation for Forwarding Functions ctd
+
+**Attempt 4**: Forwarding references. What's wrong with this?
 
 ``` cpp
 template <typename T>
 auto wrapper(T&& value) {
-    // psuedocode
-    return fn(value is lvalue ? value : std::move(value));
+    return fn(value);
+}
+```
+
+For an lvalue, it calls `fn(i)`
+
+``` cpp
+// Instantiation generated
+auto wrapper<int&>((int&)&& value) {
+    return fn(value);
+}
+
+// Collapses to
+auto wrapper<int&>(int& value) {
+    return fn(value);
+}
+
+int i;
+wrapper(i);
+```
+
+For an rvalue, it also calls `fn(i)`. The parameter is an rvalue, but inside the function, `value` is an lvalue.
+
+``` cpp
+// Instantiation generated
+auto wrapper<int&&>((int&&)&& value) {
+    return fn(value);
+}
+
+// Collapses to
+auto wrapper<int&&>(int&& value) {
+    return fn(value);
+}
+
+int i;
+wrapper(std::move(i));
+```
+
+What we wanted to generate was:
+
+``` cpp
+auto wrapper<int&>(int& value) {
+    return fn(static_cast<int&>(value));
+}
+
+auto wrapper<int&&>(int&& value) {
+    return fn(static_cast<int&&>(value));
+}
+```
+
+It turns out there's a function for this already:
+
+``` cpp
+template <typename T>
+auto wrapper<T&& value> {
+    return fn(std::forward<T>(value));
+    // Equivalent to (but don't do this, std::forward is easier and self-explanatory)
+    // return fn(static_cast<T>(value));
 }
 
 wrapper(std::move(x));
 ```
 
-### `std::forward`
-
 **`std::forward`** returns:
 
 * a reference to value for lvalues
-`std::move(value)` for rvalues
+* `std::move(value)` for rvalues
 
 ``` cpp
 // This is approximately std::forward
@@ -257,18 +330,13 @@ auto forward(T&& value) -> T&& {
 }
 ```
 
-``` cpp
-template <typename T>
-auto wrapper(T&& value) -> void {
-    return fn(std::forward<T>(value));
-}
-
-wrapper(std::move(x));
-```
-
 ### `std::forward` and Variadic Templates
 
-Often you need to call a function you know nothing about. It may have any amount of parameters; each parameter may be a different unknown type, each parameter may be an lvalue or rvalue.
+Often you need to call a function you know nothing about.
+
+* It may have any amount of parameters
+* Each parameter may be a different unknown type
+* Each parameter may be an lvalue or rvalue
 
 ``` cpp
 template <typename... Args>

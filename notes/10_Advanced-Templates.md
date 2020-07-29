@@ -130,8 +130,8 @@ public:
     auto pop() -> void { stack_.pop_back(); }
     auto size() const -> int { return stack_.size(); };
     auto sum() -> int{
-    return std::accumulate(stack_.begin(),
-        stack_.end(), 0, [] (int a, T *b) { return a + *b; });
+        return std::accumulate(stack_.begin(), stack_.end(), 0,
+            [] (int a, T *b) { return a + *b; });
     }
 private:
     std::vector<T*> stack_;
