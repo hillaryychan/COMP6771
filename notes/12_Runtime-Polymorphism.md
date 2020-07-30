@@ -211,7 +211,7 @@ How can it ensure that calling `get_member` doesn't have a similar overhead
 
 We can explicitly tell the compiler that `get_class_name` is a function designed to be modified by subclasses.  
 We use the keyword `virtual` in the base class  
-We use the keyword `override` in the subclass
+We use the keyword `override` in the subclass. It is not mandatory for derived class to override (or re-define the virtual function), in that case base class version of function is used.
 
 ``` cpp
 class BaseClass {
@@ -250,7 +250,7 @@ int main() {
 
 ### `override`
 
-While `override` isn't required by the compiler, you should **always** use it. `override` fails to compile if the function doesn't exist in the base class. This helps with:
+While `override` isn't required by the compiler when overriding a virtual function, you should **always** use it. `override` fails to compile if the function doesn't exist in the base class. This helps with:
 
 * typos
 * refactoring
@@ -280,14 +280,48 @@ private:
 };
 ```
 
-If we changed our main function to:
+Overriding also works for heap objects:
 
 ``` cpp
+class BaseClass {
+public:
+    int get_member() { return member_; }
+    virtual std::string get_class_name() {
+        return "BaseClass\n";
+    }
+
+    ~BaseClass() {
+        std::cout << "Destructing base class\n";
+    }
+
+private:
+    int member_;
+};
+
+class SubClass: public BaseClass {
+public:
+    std::string get_class_name() override {
+        return "SubClass\n";
+    }
+
+    ~SubClass() {
+        std::cout << "Destructing subclass\n";
+    }
+
+private:
+    int subclass_data_;
+};
+
 int main() {
     auto subclass = static_cast<std::unique_ptr<BaseClass>>(std::make_unique<SubClass>());
-    std::cout << subclass->get_class_name(); // prints "SubClass"
+    std::cout << subclass->get_class_name();
+    // prints:
+    // SubClass
+    // Destructing base class
 }
 ```
+
+Notice the above code calls the destructor for `BaseClass` instead of `SubClass`. We will look into that a [destructing polymorphic objects](#destructing-polymorphic-objects)
 
 ### VTables
 
@@ -384,10 +418,365 @@ If you want to store a polymorphic object, use a pointer.
 
 ``` cpp
 // Good C++ code
-// But there's a potential problem here.
-// (*very* hard to spot)
+// But there's a potential problem here for destructing objects
 auto base = std::vector<std::unique_ptr<BaseClass>>();
 base.push_back(std::make_unique<BaseClass>());
 base.push_back(std::make_unique<Subclass1>());
 base.push_back(std::make_unique<Subclass2>());
+```
+
+### Destructing Polymorphic Objects
+
+Recall that our heap instance of `SubClass` called the destructor for `BaseClass` when it goes out of scope in our previous example.
+
+``` cpp
+class BaseClass {
+public:
+    int get_member() { return member_; }
+    virtual std::string get_class_name() {
+        return "BaseClass\n";
+    }
+
+    ~BaseClass() {
+        std::cout << "Destructing base class\n";
+    }
+
+private:
+    int member_;
+};
+
+class SubClass: public BaseClass {
+public:
+    std::string get_class_name() override {
+        return "SubClass ";
+    }
+
+    ~SubClass() {
+        std::cout << "Destructing subclass\n";
+    }
+
+private:
+    int subclass_data_;
+};
+
+int main() {
+    auto subclass = static_cast<std::unique_ptr<BaseClass>>(std::make_unique<SubClass>());
+    std::cout << subclass->get_class_name(); // prints "SubClass Destructing base class"
+}
+```
+
+Whenever you write a class intended to be inherited from, **always** make your destructor virtual.  
+**Remember**: when you declare a destructor, the move constructor and assignment are not synthesised.
+
+So to fix our problem before, we make the `BaseClass` destructor virtual:
+
+``` cpp
+class BaseClass {
+    BaseClass(BaseClass&&) = defaul;
+    BaseClass(BaseClass&) = defaul;
+    virtual ~BaseClass() = default;
+};
+```
+
+***Forgetting this can be a hard bug to spot***
+
+## Static and Dynamic Types
+
+**Static type** is the type an object is declared as.  
+**Dynamic type** is the type of the object itself.
+
+Static means compile time, dynamic means runtime.
+
+Due to object slicing, for an object that is not a reference or a pointer, the dynamic type is just the static type.
+
+Some rules to help deduce object types:
+
+1. The static type is the type the compiler sees it as
+2. An object that is not a reference or a pointer, the dynamic type is just the static type
+3. The dynamic type of an object is the dynamic type of the right-hand side object.
+
+``` cpp
+int main() {
+    auto base_class = BaseClass();                   // static type: BaseClass, dynamic type: BaseClass
+    auto subclass = SubClass();                      // static type: SubClass, dynamic type: SubClass
+    auto sub_copy = subclass;                        // static type: SubClass, dynamic type: SubClass
+
+    // The following could all be replaced with pointers
+    // and have the same effect.
+    const BaseClass& base_to_base{base_class};       // static type: const BaseClass&, dynamic type: BaseClass&
+
+    // Another reason to use auto - you can't accidentally do this.
+    const BaseClass& base_to_sub{subclass};          // static type: const BaseClass&, dynamic type: const SubClass&
+
+    // Fails to compile
+    const SubClass& sub_to_base{base_class};         // static type: const SubClass&, dynamic type: const BaseClass&
+    const SubClass& sub_to_sub{subclass};            // static type: const SubClass&, dynamic type: const SubClass&
+
+    // Fails to compile (even though it refers to at a sub);
+    const SubClass& sub_to_base_to_sub{base_to_sub}; // static type: const SubClass&, dynamic type: const SubClass&
+}
+```
+
+**Static binding** decides which function to call at compile time (based on static type)  
+**Dynamic binding** decides which function to call at runtime (based on dynamic type)
+
+C++ is:
+
+* statically typed (types are calculated at compile time)
+* static binding for non-virtual functions
+* dynamic binding for virtual functions
+
+Java is:
+
+* statically typed
+* dynamic binding
+
+### Up-casting
+
+Casting from a ***derived class to a base class*** is called **up-casting**. This cast is **always safe**; all dogs are animals. Because the cast is always safe, C++ allows this an an implicit cast. One of the reasons to use auto it that it avoids implicit casts.
+
+``` cpp
+auto dog = Dog();
+
+// up-cast with references
+Animal& animal = dog;
+
+// up-cast with pointers
+Animal* animal = &dog;
+
+// What's this (hint: no an up-cast)? It's object slicing
+Animal animal{dog};
+```
+
+### Down-casting
+
+Casting from a ***base class to a derived class*** is called **down-casting**. This cast is **not safe**; not all animals are dogs.
+
+``` cpp
+auto dog = Dog();
+auto cat = Cat();
+Animal& animal_dog{dog}; // static type: Animal&, dynamic type: Dog&
+Animal& animal_cat{cat}; // static type: Animal&, dynamic type: Cat&
+
+// Attempt to down-cast with references
+// Neither of these compile because the compiler does not
+// know the dynamic types of the objects we are assigning
+Dog& dog_ref{animal_dog}; // trying to assign Dog& to Dog&
+Dog& dog_ref{animal_cat}; // trying to assign Cat& to Dog&
+```
+
+**How to down-cast:**  
+The compiler doesn't know if an `Animal` happens to be a `Dog`. If you ***know*** it is, you can use `static_cast`. Otherwise, you can use `dynamic_cast`. `dynamic_cast`:
+
+* throws exceptions for reference types if it doesn't match
+* returns `nullptr` for pointer types if it doesn't match
+
+Down-casting references:
+
+``` cpp
+auto dog = Dog();
+auto cat = Cat();
+Animal& animal_dog{dog};
+Animal& animal_cat{cat};
+
+// Attempt to down-cast with references.
+Dog& dog_ref{static_cast<Dog&>(animal_dog)};
+Dog& dog_ref{dynamic_cast<Dog&>(animal_dog)};
+// Undefined behaviour (incorrect static cast).
+Dog& dog_ref{static_cast<Dog&>(animal_cat)};
+// Throws exception
+Dog& dog_ref{dynamic_cast<Dog&>(animal_cat)};
+```
+
+Down-casting pointers:
+
+``` cpp
+auto dog = Dog();
+auto cat = Cat();
+Animal& animal_dog{dog};
+Animal& animal_cat{cat};
+
+// Attempt to down-cast with pointers.
+Dog* dog_ref{static_cast<Dog*>(&animal_dog)};
+Dog* dog_ref{dynamic_cast<Dog*>(&animal_dog)};
+// Undefined behaviour (incorrect static cast).
+Dog* dog_ref{static_cast<Dog*>(&animal_cat)};
+// returns null pointer
+Dog* dog_ref{dynamic_cast<Dog*>(&animal_cat)};
+```
+
+## Types of Functions
+
+| Syntax                   | Name         | Meaning                                        |
+| ---                      | ---          | ---                                            |
+| `virtual void fn() = 0;` | pure virtual | Inherit interface **only**                     |
+| `virtual void fn {}`     | virtual      | Inherit interface with optional implementation |
+| `void fn() {}`           | non-virtual  | Inherit interface and mandatory implementation |
+
+Note: non-virtuals can be hidden by writing a function with the same name in a subclass. **DO NOT DO THIS**.
+
+### Covariants
+
+**Covariants** cover what type a derived can return if it overrides a base.
+
+If a function overrides a base, it must also return the type specified by the base. E.g. If a base specifies that it returns a `LandAnimal`, a derived also needs to return a `LandAnimal`. Every possible return type for the derived must be a valid return type for the base.
+
+``` cpp
+class Base {
+    virtual LandAnimal& get_favourite_animal();
+};
+
+class Derived: public Base {
+    // Fails to compile: not all animals are land animals
+    Animal& get_favourite_animal() override;
+    // Compiles: all land animals are land animals
+    LandAnimal& get_favourite_animal() override;
+    // Compiles: all dogs are land animals
+    Dog& get_favourite_animal() override;
+};
+```
+
+### Contravariants
+
+**Contravariants** cover what type a derived can take in if it overrides a base.
+
+If a function overrides a base, every possible parameter to the base must be a possible parameter for the derived.. E.g. If a base specifies that it takes in `LandAnimal`, a `LandAnimal` must always be valid input in the derived.
+
+``` cpp
+class Base {
+    virtual void use_animal(LandAnimal&);
+};
+
+class Derived: public Base {
+    // Compiles: all land animals are valid input (animals)
+    void use_animal(Animal&) override;
+    // Compiles: all land animals are valid input (land animals)
+    void use_animal(LandAnimal&) override;
+    // Fails to compile: not all land animals are valid input (dogs)
+    void use_animal(Dog&) override;
+};
+```
+
+### Default Argument and Virtuals
+
+Default arguments are determined at compile time for efficiency's sake. Hence, default arguments need to use the **static type** of the function. **Avoid default arguments when overriding virtual functions**.
+
+``` cpp
+class Base {
+    virtual void print_num(int i = 1) {
+        std::cout << "Base " << i << "\n";
+    }
+};
+
+class Derived: public Base {
+    void print_num(int i = 2) {
+        std::cout << "Derived " << i << "\n";
+    }
+};
+
+int main() {
+    Derived derived;
+    Base& base = derived;
+    derived.print_num(); // prints "Derived 2"
+    // at compile time static type of base is Base&
+    // hence default argument is derived evaluated to 1
+    base.print_num();    // prints "Derived 1"
+}
+```
+
+## Construction of Derived Classes
+
+Base classes are always constructed **before** the derived class is constructed.  
+The base class constructor never depends on the members of the derived class.  
+The derived class constructor may depend on the members of the base class.
+
+``` cpp
+class Animal {...}
+class LandAnimal: public Animal {...}
+class Dog: public LandAnimals {...}
+
+Dog d;
+
+// Dog() calls LandAnimal()
+//     LandAnimal() calls Animal()
+//         Animal members constructed using initialiser list
+//         Animal constructor body runs
+//     LandAnimal members constructed using initialiser list
+//     LandAnimal constructor body runs
+// Dog members constructed using initialiser list
+// Dog constructor body runs
+```
+
+If a class is not fully constructed, it cannot perform dynamic binding; hence overridden virtual functions called in the constructor will call the base function.
+
+``` cpp
+class Animal {/*...*/};
+
+class LandAnimal: public Animal {
+    LandAnimal() {
+        Run();
+    }
+
+    virtual void Run() {
+        std::cout << "Land animal running\n";
+    }
+};
+
+class Dog: public LandAnimal {
+    void Run() override {
+        std::cout << "Dog running\n";
+    }
+};
+
+// When the LandAnimal constructor is being called,
+// the Dog part of the object has not been constructed yet.
+// C++ chooses to not allow dynamic binding in constructors
+// because Dog::Run() might depend upon Dog's members.
+Dog d; // prints "Land animal running"
+```
+
+## Destruction of Derived Classes
+
+This is just the opposite of construction order.
+
+``` cpp
+class Animal {...}
+class LandAnimal: public Animal {...}
+class Dog: public LandAnimals {...}
+auto d = Dog();
+
+// ~Dog() destructor body runs
+// Dog members destructed in reverse order of declaration
+// ~LandAnimal() destructor body runs
+// LandAnimal members destructed in reverse order of declaration
+// ~Animal() destructor body runs
+// Animal members destructed in reverse order of declaration.
+```
+
+If a class is partially destructed, it cannot perform dynamic binding. This is unrelated to the destructor itself being virtual.
+
+``` cpp
+class Animal {/*...*/};
+
+class LandAnimal: public Animal {
+    virtual ~LandAnimal() {
+        Run();
+    }
+
+    virtual void Run() {
+        std::cout << "Land animal running\n";
+    }
+};
+
+class Dog: public LandAnimal {
+    void Run() override {
+        std::cout << "Dog running\n";
+    }
+};
+
+// When the LandAnimal destructor is being called,
+// the Dog part of the object has already been destroyed.
+// C++ chooses to not allow dynamic binding in destructors
+// because Dog::Run() might depend upon Dog's members.
+Dog d; // prints "Land animal running"
 ```
