@@ -23,7 +23,9 @@ Be sure to choose the right one!
 ### Protected Members
 
 `protected` is a keyword we can use instead of `public`/`private`  
-`protected` members are accessible only to the class, or any subclass of it
+`protected` members are accessible only to the class, or any subclass of it.
+
+We generally prefer not to use `protected` as we do not want implementations to depend too much on each other
 
 ## Inheritance in C++
 
@@ -36,7 +38,8 @@ class DerivedClass: public BaseClass {};
 
 Visibility can be one of:
 
-* `public` - generally use this unless you have a good reason not to. If you don't want `public`, you should (usually) us composition
+* `public` - generally use this unless you have a good reason not to. If you don't want `public`, you should (usually) us composition.  
+Notes: the derived class cannot access `private` members for the base class. To access the members, you can make them `protected` or (and ***preferably***) use getters and setters
 * `protected`
 * `private`
 
@@ -735,6 +738,12 @@ class Dog: public LandAnimal {
 Dog d; // prints "Land animal running"
 ```
 
+Construction order:
+
+1. construct parent classes
+2. construct field members
+3. execute body of constructor
+
 ## Destruction of Derived Classes
 
 This is just the opposite of construction order.
@@ -780,3 +789,9 @@ class Dog: public LandAnimal {
 // because Dog::Run() might depend upon Dog's members.
 Dog d; // prints "Land animal running"
 ```
+
+Construction order:
+
+1. execute body of destructor
+2. destruct field members
+3. destruct parent classes
