@@ -708,6 +708,46 @@ Static functions and members belong to the class (i.e. every object), as opposed
 
 Use static members when something is associated with a class, but not a particular instance.
 
+Static members cannot be declared inline, they must be initialised ***outside*** the class:
+
+``` cpp
+class BookSale {
+public:
+    explicit BookSale(const std::string& name)
+    : book_name{name} {
+        ++counter;
+    }
+  BookSale() : BookSale{""} {}
+
+private:
+  std::string book_name_;
+  // Count how many objs are created by this constructor
+  static int counter;
+};
+
+int BookSale::counter = 0;
+```
+
+To initialise a static member ***inside*** the class use the keyword `inline`:
+
+``` cpp
+class BookSale {
+public:
+    explicit BookSale(const std::string& name)
+    : book_name{name} {
+        ++counter;
+    }
+  BookSale() : BookSale{""} {}
+
+private:
+  std::string book_name_;
+  // Count how many objs are created by this constructor
+  inline static int counter = 0;
+};
+```
+
+Static functions:
+
 ``` cpp
 // For use with a database
 class user {
