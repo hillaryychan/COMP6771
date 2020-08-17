@@ -355,6 +355,33 @@ auto print(int a, float b, const char* c) -> v
 }
 ```
 
+Another example of variadic templates:
+
+``` cpp
+#include <iostream>
+#include <sstream>
+#include <vector>
+
+template<typename T>
+auto to_string_impl(T const& t) {
+    auto ss = std::stringstream{};
+    ss << t;
+    return ss.str();
+}
+
+template<typename ... Param>
+auto to_string(Param const& ... param) -> std::vector<std::string> {
+    return {to_string_impl(param)...};
+}
+
+auto main() -> int{
+    auto const vec = to_string("hello", 1, 5.3, "World");
+    for (auto const& o : vec) {
+        std::cout << o << "\n";
+    }
+}
+```
+
 ## Member Templates
 
 Sometimes templates can be too rigid for our liking.  
