@@ -159,8 +159,8 @@ namespace comp6771 {
 } // namespace comp6771
 ```
 
-It is preferrable to have top-level and occasionally two-tier namespaces to multi-tier.  
-It is okay to won multiple namespaces per project, if they logically separate things.
+It is preferable to have top-level and occasionally two-tier namespaces to multi-tier.  
+It is okay to have multiple namespaces per project, if they logically separate things.
 
 ### Unnamed namespaces
 
